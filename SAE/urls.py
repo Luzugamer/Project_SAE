@@ -25,8 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('Pages.urls')),
     path('', include('Login.urls')),
-    path('', include('M3_modulo_de_examen.urls')),
-    path('comunidad/', include(('M6_Comunidades.urls', 'M6_Comunidades'), namespace='comunidad')),
+    path('', include('M2_CONTENIDO_EDUCATIVO.urls')),
     path('logout/', logout_, name='logout'),
 ] 
 

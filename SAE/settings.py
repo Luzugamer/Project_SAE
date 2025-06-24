@@ -40,8 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Login.apps.LoginConfig',
     'Pages',
-    'M3_modulo_de_examen',
-    'M6_Comunidades',
+    'M2_CONTENIDO_EDUCATIVO',
     'bootstrap5'
 ]
 
@@ -127,6 +126,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'M2_CONTENIDO_EDUCATIVO' / 'static',
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

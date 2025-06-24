@@ -1,0 +1,166 @@
+{% extends "Pages/base.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'repositorio/repositorio.css' %}">
+
+<h1>Repositorio</h1>
+
+<div class="search-container">
+    <input type="text" placeholder="Buscar universidad..." />
+
+    <div class="filtro-opciones" class="filtro-opciones">
+        <button type="button" id="toggle-opciones">Opciones de filtro</button>
+
+        <div id="contenedor-filtros">
+            <div class="filtro-item">
+                <label>
+                    <select id="filtro-pais" class="select-filtro">
+                        <option value="">Seleccionar país</option>
+                    </select>
+                    <input type="checkbox" id="check-pais">
+                    <span>País</span>
+                </label>
+            </div>
+
+            <div class="filtro-item">
+                <label>
+                    <select id="filtro-especialidad" class="select-filtro">
+                        <option value="">Seleccionar especialidad</option>
+                    </select>
+                    <input type="checkbox" id="check-especialidad">
+                    <span>Especialidad</span>
+                </label>
+            </div>
+
+            <div class="filtro-item">
+                <label>
+                    <select id="filtro-tipo" class="select-filtro">
+                        <option value="">Seleccionar tipo</option>
+                    </select>
+                    <input type="checkbox" id="check-tipo">
+                    <span>Tipo</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="tarjetas">
+    {% for universidad in universidades %}
+        <div class="tarjeta" data-universidad-id="{{ universidad.id }}">
+            <div class="tarjeta-header">
+                <img src="{{ universidad.logo.url }}" alt="{{ universidad.nombre }}" />
+                <div class="universidad-info">
+                        <h3>{{ universidad.nombre }}</h3>
+                        <div class="detalle-universidad">
+                            <span class="pais">{{ universidad.pais|default:"Perú" }}</span>
+                            <span class="especialidad">{{ universidad.especialidad }}</span>
+                            <span class="tipo-solucionario">{{ universidad.get_tipo_solucionario_display }}</span>
+                        </div>
+                </div>
+                <div class="expand-indicator"></div>
+            </div>
+
+            <div class="examenes-container">
+                <div class="examenes-list">
+                        {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+                        <div class="examen-item agregar-examen" onclick="mostrarFormulario('{{ universidad.id|escapejs }}')">
+                            <div class="examen-icon">+</div>
+                            <div class="examen-info">
+                                <h4>Añadir examen</h4>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% for examen in universidad.examenes.all %}
+                        
+                        <div class="examen-item" data-examen-id="{{ examen.id }}">
+                            <div class="examen-icon">📄</div>
+                            <div class="examen-info">
+                                <h4>{{ examen.nombre }}</h4>
+                                <div class="fecha">{{ examen.fecha }}</div>
+                                <a href="{{ examen.archivo.url }}" download class="descargar-link">📥 Descargar</a>
+
+                                {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+                                    <div class="examen-actions">
+                                        <button type="button"
+                                                data-universidad-id="{{ universidad.id }}"
+                                                data-examen-id="{{ examen.id }}"
+                                                data-nombre="{{ examen.nombre|escapejs }}"
+                                                data-fecha="{{ examen.fecha|date:'Y-m-d' }}"
+                                                onclick="editarExamenDesdeDataset(this)">
+                                            ✏️
+                                        </button>
+                                        <button type="button" class="btn-eliminar" onclick="confirmarEliminarExamen('{{ examen.id }}')">🗑️</button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="no-examenes">No hay exámenes disponibles.</p>
+                    {% endfor %}
+
+                    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+                        
+
+                        <div class="repositorio-actions">
+                            <a href="{% url 'editar_universidad' universidad.id %}" class="btn-editar-repositorio">✏️ Editar</a>
+                            <button type="button" class="btn-eliminar-repositorio" onclick="confirmarEliminarRepositorio('{{ universidad.id }}')">🗑️ Eliminar</button>
+                        </div>
+
+                        <div class="formulario-examen" id="formulario-examen-{{ universidad.id }}" style="display: none;">
+                            <form method="POST" enctype="multipart/form-data" action="{% url 'add_examen' universidad.id %}" data-mode="crear">
+                                {% csrf_token %}
+                                <input type="hidden" name="examen_id" value="">
+                                <input type="text" name="nombre" placeholder="Nombre del examen" required autocomplete="off">
+                                <input type="date" name="fecha" required>
+                                <input type="file" name="archivo" accept=".pdf">
+                                <button type="submit" class="btn-submit">Subir</button>
+                            </form>
+                        </div>
+                        <div id="modal-contenedor" class="modal" style="display: none;"></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p style="text-align: center; grid-column: 1 / -1; color: #ff0000;">
+            No hay universidades registradas.
+        </p>
+    {% endfor %}
+
+    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+        <div class="tarjeta tarjeta-agregar">
+            <a href="{% url 'add_universidad' %}" style="text-decoration: none; color: inherit;">
+                <div class="icono-mas">+</div>
+                <p class="agregar-texto">Agregar un repositorio de exámenes de admisión</p>
+            </a>
+        </div>
+
+        <div id="modal-formulario" class="modal" style="display:none;">
+            <div class="modal-content" id="modal-formulario-contenido">
+                <span class="btn-cancel" onclick="cerrarModalFormulario()">✖️</span>
+                <div id="modal-formulario-body"></div>
+            </div>
+        </div>
+
+        <div id="modal-confirmacion" class="modal" style="display: none;">
+            <div class="modal-content">
+                <p id="modal-mensaje">¿Estás seguro?</p>
+                <div class="modal-actions">
+                    <button id="btn-confirmar" class="btn-submit">Sí</button>
+                    <button id="btn-cancelar" class="btn-cancel">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script src="{% static 'repositorio/repositorio.js' %}"></script>
+<script>
+    window.csrfToken = '{{ csrf_token }}';
+    document.body.dataset.userRole = '{% if user.is_authenticated %}{{ user.usuariorol_set.first.rol.nombre_rol }}{% endif %}';
+</script>
+
+{% endblock %}
