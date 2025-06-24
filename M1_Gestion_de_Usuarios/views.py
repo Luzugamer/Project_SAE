@@ -272,7 +272,7 @@ def dispositivos_view(request):
     dispositivos = request.user.dispositivos.filter(activo=True).order_by('-ultimo_acceso')
     hay_principal = dispositivos.filter(es_principal=True).exists()
 
-    return render(request, 'M1_Gestion_de_Usuarios/dispositivos_confiables.html', {
+    return render(request, 'M1_Gestion_de_Usuarios/dispositivos.html', {
         'dispositivos': dispositivos,
         'hay_principal': hay_principal
     })

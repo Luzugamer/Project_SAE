@@ -135,7 +135,7 @@ class DispositivoUsuario(models.Model):
     nombre_dispositivo = models.CharField(max_length=255, blank=True)
     user_agent = models.TextField()
     ip_address = models.GenericIPAddressField()
-    fingerprint = models.CharField(max_length=64, unique=True)
+    fingerprint = models.CharField(max_length=64)
     es_confiable = models.BooleanField(default=False)
     es_principal = models.BooleanField(default=False)
     primer_acceso = models.DateTimeField(auto_now_add=True)
@@ -149,7 +149,7 @@ class DispositivoUsuario(models.Model):
     pais = models.CharField(max_length=100, blank=True)
 
     class Meta:
-        unique_together = ('usuario', 'fingerprint')
+        pass
 
     def __str__(self):
         return f"{self.usuario.correo_electronico} - {self.nombre_dispositivo or 'Dispositivo desconocido'}"

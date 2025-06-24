@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_totp',
     
-    'Login.apps.LoginConfig',
+    'M1_Gestion_de_Usuarios.apps.M1GestionDeUsuariosConfig',
     'Paginas_Inicio',
     
     'cloudinary',
@@ -84,7 +84,7 @@ else:
         }
     }
 
-AUTH_USER_MODEL = 'Login.Usuario'
+AUTH_USER_MODEL = 'M1_Gestion_de_Usuarios.Usuario'
 
 AUTH_PASSWORD_VALIDATORS = [
     {

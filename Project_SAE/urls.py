@@ -2,13 +2,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from Login.views import logout_
+from M1_Gestion_de_Usuarios.views import logout_
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('Paginas_Inicio.urls')),
-    path('', include('Login.urls')),
+    path('', include('M1_Gestion_de_Usuarios.urls')),
     path('logout/', logout_, name='logout'),
 ] 
 
