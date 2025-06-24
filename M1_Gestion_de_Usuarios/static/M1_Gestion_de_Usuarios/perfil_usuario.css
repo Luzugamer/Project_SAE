@@ -1,0 +1,453 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+:root {
+  --color-bg: #79f083fc;
+  --color-card-bg: #ffffff;
+  --color-primary: #2c5282;
+  --color-secondary: #462ee4b6;
+  --color-text: #1e293b;
+  --color-muted: #64748b;
+  --color-input-bg: #f0f4fa;
+  --color-border: #cbd5e1;
+  --color-glow: rgba(144, 205, 244, 0.15);
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 40px 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.perfil-card {
+  width: 80%;
+  max-width: 800px;
+  max-height: 8000px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  position: relative;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 25px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+  color: var(--color-primary);
+  margin-bottom: 10px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.modal.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perfil-container {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  width: 100%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2c5282;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.btn-close:hover {
+    color: #2c5282;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #2c5282;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2c5282;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary {
+    background-color: #e2e8f0;
+    color: #2c5282;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background-color: #cbd5e1;
+}
+
+.btn-primary {
+    background-color: #2c5282;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #1a365d;
+}
+
+.perfil-card {
+  backdrop-filter: blur(5px); /* Efecto de vidrio */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Agrega esto al CSS existente */
+.perfil-header {
+  display: flex;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+.perfil-foto {
+  width: 300px;  /* Aumenté el tamaño */
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;  /* Bordes ligeramente redondeados */
+  border: 4px solid #fff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin-right: 2rem;  /* Espacio a la derecha */
+  margin-left: 0;  /* Quitamos el margen izquierdo */
+}
+
+.perfil-info-basica {
+  flex: 1;
+}
+
+.perfil-nombre {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+/* Agregar estos estilos en perfil_usuario.css */
+
+/* =============================================
+   Estilos para Modal de Foto de Perfil
+   ============================================= */
+
+.photo-upload-container {
+    padding: 20px 0;
+}
+
+.current-photo {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.current-photo img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ecef;
+}
+
+.upload-area {
+    border: 2px dashed #ced4da;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+    background-color: #e3f2fd;
+}
+
+.upload-area.drag-over {
+    border-color: #007bff;
+    background-color: #e3f2fd;
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 48px;
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.upload-area p {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.upload-area small {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.photo-preview {
+    text-align: center;
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.photo-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+}
+
+.btn-remove-preview {
+    position: absolute;
+    top: -5px;
+    right: calc(50% - 105px);
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove-preview:hover {
+    background: #c82333;
+}
+
+/* Mejorar la foto de perfil principal */
+.perfil-foto {
+    transition: all 0.3s ease;
+}
+
+.perfil-foto:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Animaciones para el toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 5px;
+  color: white;
+  font-weight: 500;
+  z-index: 10000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+.toast-success {
+    background-color: #28a745;
+}
+
+.toast-error {
+    background-color: #dc3545;
+}
+
+.info-item {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.info-label {
+  display: block;
+  font-size: 14px;
+  color: var(--color-muted);
+  margin-bottom: 5px;
+}
+
+.info-value-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-value {
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.btn-dispositivos {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.btn-2fa {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.btn-password {
+  background-color: #95a5a6;
+  color: #2c3e50;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.btn-eliminar {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.botones-container {
+  display: flex;
+  justify-content: space-between;  /* Distribución uniforme */
+  gap: 0.5rem;  /* Espacio entre botones */
+  margin-top: 2rem;
+  flex-wrap: nowrap;  /* Evitar saltos de línea */
+  overflow-x: auto;  /* Scroll horizontal si no caben */
+  padding-bottom: 0.5rem;  /* Espacio para scroll */
+}
+
+/* Botones más compactos */
+.btn-dispositivos, 
+.btn-2fa, 
+.btn-password, 
+.btn-eliminar {
+  padding: 0.6rem 1rem;  /* Reducido */
+  white-space: nowrap;  /* Texto en una línea */
+  min-width: max-content;  /* Ancho mínimo necesario */
+  font-size: 0.9rem;  /* Texto más pequeño */
+  flex: 1;  /* Ocupar espacio disponible */
+  max-width: 180px;  /* Ancho máximo */
+}
+
+/* Iconos más pequeños */
+.botones-container i {
+  font-size: 0.9rem;
+  margin-right: 0.3rem;
+}
+
+/* Agrega estos estilos */
+.botones-perfil {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn-cambiar-foto, .btn-editar-perfil {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-cambiar-foto {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-editar-perfil {
+    background-color: #3498db;
+    color: white;
+}

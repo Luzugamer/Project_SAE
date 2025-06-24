@@ -1,0 +1,809 @@
+{% extends "Pages/base.html" %}
+{% load static %}
+
+{% block title %}Mi Perfil - SAE{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'M1_Gestion_de_Usuarios/perfil_usuario.css' %}">
+
+<div class="perfil-container">
+    <div class="perfil-card">
+        <!-- Sección superior -->
+        <div class="perfil-header">
+            {% if user.foto_perfil %}
+                <img src="{{ user.foto_perfil.url }}" 
+                    class="perfil-foto" 
+                    alt="Foto de perfil" 
+                    id="perfilFoto"
+                    loading="lazy">
+            {% else %}
+                <img src="{% static 'img/avatar-default.png' %}" 
+                    class="perfil-foto" 
+                    alt="Foto de perfil" 
+                    id="perfilFoto">
+            {% endif %}
+
+            <div class="perfil-info-basica">
+                <h1 class="perfil-apellido">{{ user.apellido }}</h1>                
+                <h1 class="perfil-nombre">{{ user.nombre }}</h1>
+                <div class="botones-perfil">
+                    <button class="btn-cambiar-foto" onclick="openPhotoModal()">
+                        <i class="fas fa-camera"></i> Cambiar foto
+                    </button>
+                    <button class="btn-editar-perfil" onclick="openEditModal()">
+                        <i class="fas fa-edit"></i> Editar perfil
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del perfil -->
+        <div class="perfil-info-section">
+            <div class="info-item" data-field="sobre_mi">
+                <span class="info-label">Sobre mí</span>
+                <div class="info-value-container">
+                    <span class="info-value">{{ user.sobre_mi|default:"No especificado" }}</span>
+                </div>
+            </div>
+            <div class="info-item" data-field="correo">
+                <span class="info-label">Correo</span>
+                <div class="info-value-container">
+                    <span class="info-value">{{ user.correo_electronico }}</span>
+                </div>
+            </div>
+
+            <div class="info-item" data-field="institucion">
+                <span class="info-label">Institución educativa</span>
+                <div class="info-value-container">
+                    <span class="info-value">{{ user.institucion|default:"No especificada" }}</span>
+                </div>
+            </div>
+
+            <div class="info-item" data-field="genero">
+                <span class="info-label">Género</span>
+                <div class="info-value-container">
+                    <span class="info-value">{{ user.genero|default:"No especificado" }}</span>
+                </div>
+            </div>
+
+            <div class="info-item" data-field="direccion">
+                <span class="info-label">Dirección</span>
+                <div class="info-value-container">
+                    <span class="info-value">{{ user.direccion|default:"No especificada" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="botones-container">
+            <button class="btn-dispositivos" onclick="window.location.href='{% url 'dispositivos' %}'">
+                <i class="fas fa-laptop"></i> Dispositivos
+            </button>
+            <button class="btn-2fa" onclick="window.location.href='{% url 'setup_2fa' %}'">
+                <i class="fas fa-shield-alt"></i> 2FA
+            </button>
+            <button class="btn-password" onclick="openPasswordChangeModal()">
+                <i class="fas fa-key"></i> Contraseña
+            </button>
+            <button class="btn-eliminar" onclick="openDeleteModal()">
+                <i class="fas fa-trash-alt"></i> Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal de Edición de Perfil -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Editar Perfil</h3>
+            <button type="button" class="btn-close" onclick="closeEditModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="editProfileForm" method="post" action="{% url 'editar_perfil_completo' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" name="nombre" class="form-control" value="{{ user.nombre }}" required>
+            </div>
+            <div class="form-group">
+                <label>Apellido</label>
+                <input type="text" name="apellido" class="form-control" value="{{ user.apellido }}" required>
+            </div>
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" name="correo" class="form-control" value="{{ user.correo_electronico }}" required>
+            </div>
+            <div class="form-group">
+                <label>Institución educativa</label>
+                <input type="text" name="institucion" class="form-control" value="{{ user.institucion|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label>Género</label>
+                <select name="genero" class="form-control">
+                    <option value="">Seleccionar...</option>
+                    <option value="Masculino" {% if user.genero == "Masculino" %}selected{% endif %}>Masculino</option>
+                    <option value="Femenino" {% if user.genero == "Femenino" %}selected{% endif %}>Femenino</option>
+                    <option value="Otro" {% if user.genero == "Otro" %}selected{% endif %}>Otro</option>
+                    <option value="Prefiero no decir" {% if user.genero == "Prefiero no decir" %}selected{% endif %}>Prefiero no decir</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" name="direccion" class="form-control" value="{{ user.direccion|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label>Sobre mí</label>
+                <textarea name="sobre_mi" class="form-control" rows="3">{{ user.sobre_mi|default:'' }}</textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="submitProfileBtn">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+// Variables globales
+let currentStep = 1;
+let verificationToken = null;
+let photoUploadInitialized = false;
+
+// =============================================
+// Funciones para el Modal de Cambio de Contraseña
+// =============================================
+function openPasswordChangeModal() {
+    document.getElementById('passwordModal').classList.add('show');
+    goToStep(1);
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').classList.remove('show');
+}
+
+function goToStep(step) {
+    // Ocultar todos los pasos
+    document.querySelectorAll('.step-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Actualizar indicadores
+    document.querySelectorAll('.step').forEach(stepEl => {
+        stepEl.classList.remove('active');
+    });
+    
+    // Mostrar paso actual
+    document.getElementById(`step${step}`).classList.add('active');
+    document.querySelector(`[data-step="${step}"]`).classList.add('active');
+    currentStep = step;
+}
+
+function selectVerificationMethod(method) {
+    document.getElementById('verificationMethod').value = method;
+    
+    if (method === 'email') {
+        document.getElementById('step2Title').textContent = 'Código enviado a tu email';
+        document.getElementById('verificationHelp').textContent = 'Revisa tu bandeja de entrada';
+        sendEmailVerification();
+    } else if (method === '2fa') {
+        document.getElementById('step2Title').textContent = 'Código de Google Authenticator';
+        document.getElementById('verificationHelp').textContent = 'Ingresa el código de tu app de autenticación';
+    }
+    goToStep(2);
+}
+
+function sendEmailVerification() {
+    fetch('{% url "send_verification_email" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) verificationToken = data.token;
+    });
+}
+
+function verifyCode() {
+    const code = document.getElementById('verificationCode').value;
+    
+    fetch('{% url "verify_code" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({
+            code: code,
+            method: document.getElementById('verificationMethod').value,
+            token: verificationToken
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) goToStep(3);
+        else alert('Código incorrecto');
+    });
+}
+
+
+// =============================================
+// Funciones para el Modal de Edición de Perfil
+// =============================================
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+}
+
+
+// Función para configurar el event listener del formulario
+function setupEditFormListener() {
+    const editForm = document.getElementById('editProfileForm');
+    
+    if (!editForm) {
+        console.error('El formulario editProfileForm no fue encontrado en el DOM');
+        return;
+    }
+
+    // Removemos cualquier event listener previo para evitar duplicados
+    editForm.removeEventListener('submit', handleFormSubmit);
+    
+    // Agregamos el nuevo event listener
+    editForm.addEventListener('submit', handleFormSubmit);
+}
+
+// Función para manejar el envío del formulario
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    
+    console.log('Formulario interceptado correctamente');
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerHTML;
+    
+    try {
+        // Mostrar estado de carga
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        const formData = new FormData(form);
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        if (!csrfToken) {
+            throw new Error('Token CSRF no encontrado');
+        }
+        
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+        });
+        
+        // Verificar tipo de contenido
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('La respuesta no es JSON');
+        }
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Error en el servidor');
+        }
+        
+        // Actualizar la interfaz
+        updateProfileData(data);
+        closeEditModal();
+        showToast(data.message || 'Perfil actualizado correctamente');
+        
+    } catch (error) {
+        console.error('Error en el envío del formulario:', error);
+        showToast(error.message || 'Error al guardar los cambios', false);
+        
+        if (error.message.includes('CSRF') || error.message.includes('JSON')) {
+            setTimeout(() => location.reload(), 2000);
+        }
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+}
+
+// Configurar el event listener cuando:
+// 1. La página cargue
+document.addEventListener('DOMContentLoaded', setupEditFormListener);
+
+// 2. Cada vez que se abra el modal
+function openEditModal() {
+    document.getElementById('editModal').classList.add('show');
+    setupEditFormListener(); // Reconfigurar el listener
+}
+
+
+// Función para cerrar el modal
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('show');
+}
+
+// Función para mostrar notificación
+function showToast(message, isSuccess = true) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${isSuccess ? 'toast-success' : 'toast-error'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }, 100);
+}
+
+// Función mejorada para actualizar datos
+function updateProfileData(data) {
+    // Función auxiliar para actualizar campos
+    const updateField = (selector, value, defaultValue = 'No especificado') => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            el.textContent = value || defaultValue;
+        });
+    };
+    
+    // Actualizar todos los campos necesarios
+    updateField('.perfil-nombre', `${data.nombre}`);
+    updateField('.perfil-apellido', `${data.apellido}`);
+    updateField('.perfil-email', data.correo);
+    updateField('[data-field="sobre_mi"] .info-value', data.sobre_mi);
+    updateField('[data-field="institucion"] .info-value', data.institucion, 'No especificada');
+    updateField('[data-field="genero"] .info-value', data.genero);
+    updateField('[data-field="direccion"] .info-value', data.direccion, 'No especificada');
+}
+
+// Manejar el envío del formulario
+document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = document.getElementById('submitProfileBtn');
+    const originalBtnText = submitBtn.innerHTML;
+    
+    // Mostrar estado de carga
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    
+    try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || 'Error en la respuesta del servidor');
+        }
+        
+        if (data.success) {
+            // Actualizar los datos en la página
+            updateProfileData(data);
+            
+            // Cerrar el modal
+            closeEditModal();
+            
+            // Mostrar notificación de éxito
+            showToast(data.message);
+        } else {
+            throw new Error(data.message || 'Error al actualizar el perfil');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(error.message || 'Error al conectar con el servidor', false);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+    }
+})
+
+function openPhotoModal() {
+    document.getElementById('photoModal').classList.add('show');
+    if (!photoUploadInitialized) {
+        setupPhotoUpload();
+        photoUploadInitialized = true;
+    }
+}
+
+function closePhotoModal() {
+    document.getElementById('photoModal').classList.remove('show');
+    removePreview();
+}
+
+function setupPhotoUpload() {
+    const uploadArea = document.getElementById('uploadArea');
+    const photoInput = document.getElementById('photoInput');
+    
+    if (!uploadArea || !photoInput) {
+        console.error('Elementos de upload no encontrados');
+        return;
+    }
+
+    // Limpiar event listeners previos
+    uploadArea.replaceWith(uploadArea.cloneNode(true));
+    photoInput.replaceWith(photoInput.cloneNode(true));
+    
+    // Obtener las nuevas referencias después del clonado
+    const newUploadArea = document.getElementById('uploadArea');
+    const newPhotoInput = document.getElementById('photoInput');
+    
+    // Click en el área de upload
+    newUploadArea.addEventListener('click', (e) => {
+        e.preventDefault();
+        newPhotoInput.click();
+    });
+    
+    // Cambio en el input file
+    newPhotoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (validateFile(file)) {
+                previewPhoto(file);
+            }
+        }
+    });
+    
+    // Drag and drop events
+    newUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        newUploadArea.classList.add('drag-over');
+    });
+    
+    newUploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        newUploadArea.classList.remove('drag-over');
+    });
+    
+    newUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        newUploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (validateFile(file)) {
+                // Asignar el archivo al input
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                newPhotoInput.files = dt.files;
+                previewPhoto(file);
+            }
+        }
+    });
+}
+
+function validateFile(file) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    
+    if (!allowedTypes.includes(file.type)) {
+        showToast('Por favor selecciona una imagen válida (JPEG, PNG, WebP, GIF)', false);
+        return false;
+    }
+    
+    if (file.size > maxSize) {
+        showToast('La imagen no puede superar los 5MB', false);
+        return false;
+    }
+    
+    return true;
+}
+
+function previewPhoto(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const newPhotoPreview = document.getElementById('newPhotoPreview');
+        const photoPreview = document.getElementById('photoPreview');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadBtn = document.getElementById('uploadPhotoBtn');
+        
+        if (newPhotoPreview && photoPreview && uploadArea && uploadBtn) {
+            newPhotoPreview.src = e.target.result;
+            photoPreview.style.display = 'block';
+            uploadArea.style.display = 'none';
+            uploadBtn.disabled = false;
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function removePreview() {
+    const photoPreview = document.getElementById('photoPreview');
+    const uploadArea = document.getElementById('uploadArea');
+    const photoInput = document.getElementById('photoInput');
+    const uploadBtn = document.getElementById('uploadPhotoBtn');
+    
+    if (photoPreview) photoPreview.style.display = 'none';
+    if (uploadArea) uploadArea.style.display = 'block';
+    if (photoInput) photoInput.value = '';
+    if (uploadBtn) uploadBtn.disabled = true;
+}
+
+async function uploadPhoto() {
+    const input = document.getElementById('photoInput');
+    const file = input?.files[0];
+    const spinner = document.getElementById('loading-spinner');
+    const uploadBtn = document.getElementById('uploadPhotoBtn');
+
+    if (!file) {
+        showToast('Selecciona una imagen primero', false);
+        return;
+    }
+
+    // Validar archivo nuevamente antes de subir
+    if (!validateFile(file)) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('foto_perfil', file);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    // Mostrar spinner y deshabilitar botón
+    if (spinner) spinner.style.display = 'block';
+    if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+    }
+
+    try {
+        const response = await fetch('/subir-foto-perfil/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            // Actualizar todas las imágenes de perfil en la página
+            const profileImages = document.querySelectorAll('#perfilFoto, #currentPhotoPreview');
+            profileImages.forEach(img => {
+                if (img) {
+                    // Agregar timestamp para evitar cache del navegador
+                    img.src = data.foto_url + '?t=' + new Date().getTime();
+                }
+            });
+            
+            showToast(data.message || 'Imagen actualizada correctamente', true);
+            closePhotoModal();
+        } else {
+            throw new Error(data.message || 'Error desconocido al subir imagen');
+        }
+    } catch (error) {
+        console.error('Error al subir imagen:', error);
+        showToast(error.message || 'Error al subir imagen', false);
+    } finally {
+        // Ocultar spinner y restaurar botón
+        if (spinner) spinner.style.display = 'none';
+        if (uploadBtn) {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = 'Subir Foto';
+        }
+        if (input) input.value = ''; // Limpiar input para permitir reseleccionar
+    }
+}
+
+// Función para mostrar notificaciones (si no la tienes ya)
+function showToast(message, isSuccess = true) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${isSuccess ? 'toast-success' : 'toast-error'}`;
+    document.body.appendChild(toast);
+    
+    // Mostrar toast
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Ocultar y remover toast
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Configurar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    const photoModal = document.getElementById('photoModal');
+    if (photoModal && !photoUploadInitialized) {
+        console.log('Inicializando upload de fotos para DigitalOcean Spaces');
+    }
+});
+
+// =============================================
+// Funciones para el Modal de Eliminación de Cuenta
+// =============================================
+function openDeleteModal() {
+    document.getElementById('deleteModal').classList.add('show');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+};
+</script>
+
+<!-- Modal de Cambio de Contraseña -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Cambiar Contraseña</h3>
+            <button class="btn-close" onclick="closePasswordModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="password-change-steps">
+            <div class="step-indicator">
+                <div class="step active" data-step="1">1</div>
+                <div class="step" data-step="2">2</div>
+                <div class="step" data-step="3">3</div>
+            </div>
+            
+            <!-- Paso 1: Seleccionar método de verificación -->
+            <div id="step1" class="step-content active">
+                <h4>Selecciona el método de verificación</h4>
+                <div class="verification-methods">
+                    <button class="verification-method" onclick="selectVerificationMethod('email')">
+                        <i class="fas fa-envelope"></i>
+                        <span>Código por email</span>
+                        <small>{{ user.correo_electronico }}</small>
+                    </button>
+                    {% if user.is_two_factor_enabled %}
+                    <button class="verification-method" onclick="selectVerificationMethod('2fa')">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Google Authenticator</span>
+                        <small>App de autenticación</small>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Paso 2: Verificar código -->
+            <div id="step2" class="step-content">
+                <h4 id="step2Title">Ingresa el código de verificación</h4>
+                <form id="verificationForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="verificationMethod" name="method">
+                    <div class="form-group">
+                        <input type="text" id="verificationCode" name="code" class="form-control otp-input" 
+                               placeholder="000000" maxlength="6" required>
+                        <small id="verificationHelp" class="form-text text-muted"></small>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="goToStep(1)">Atrás</button>
+                        <button type="button" class="btn btn-primary" onclick="verifyCode()">Verificar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Paso 3: Nueva contraseña -->
+            <div id="step3" class="step-content">
+                <h4>Nueva Contraseña</h4>
+                <form id="newPasswordForm" method="post" action="{% url 'cambiar_password' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Nueva contraseña</label>
+                        <input type="password" name="nueva_password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar nueva contraseña</label>
+                        <input type="password" name="confirmar_nueva_password" class="form-control" required>
+                    </div>
+                    <div class="password-requirements">
+                        <small>La contraseña debe tener:</small>
+                        <ul>
+                            <li>Al menos 8 caracteres</li>
+                            <li>Una letra mayúscula</li>
+                            <li>Una letra minúscula</li>
+                            <li>Un número</li>
+                            <li>Un carácter especial</li>
+                        </ul>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="goToStep(2)">Atrás</button>
+                        <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Eliminación de Cuenta -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Eliminar Cuenta</h3>
+            <button class="btn-close" onclick="closeDeleteModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="delete-warning">
+            <i class="fas fa-exclamation-triangle warning-icon"></i>
+            <p>¿Estás seguro de que deseas eliminar tu cuenta?</p>
+            <p><strong>Esta acción no se puede deshacer.</strong></p>
+        </div>
+        <form method="post" action="{% url 'eliminar_cuenta' %}">
+            {% csrf_token %}
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal de Cambio de Foto -->
+<div id="photoModal" class="modal">
+    <div class="modal-content">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'subir_foto_perfil' %}">
+            {% csrf_token %}
+            <div class="modal-header">
+                <h3>Cambiar Foto de Perfil</h3>
+                <button class="btn-close" type="button" onclick="closePhotoModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="photo-upload-container">
+                <div class="current-photo">
+                    {% if user.foto_perfil %}
+                        <img src="{{ user.foto_perfil.url }}" alt="Foto actual" id="currentPhotoPreview">
+                    {% else %}
+                        <img src="{% static 'img/avatar-default.png' %}" alt="Foto actual" id="currentPhotoPreview">
+                    {% endif %}
+                </div>
+
+                <div class="upload-area">
+                    <input type="file" name="foto_perfil" accept="image/*" required>
+                    <small>Formatos permitidos: JPG, PNG, WebP, GIF (Máximo 5MB)</small>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closePhotoModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Subir Foto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+{% endblock %}
