@@ -7,6 +7,10 @@ def pag_descripcion(request):
     return render(request, 'Paginas_Inicio/pag_descripcion.html')
 
 @login_required
+def pag_principal(request):
+    return render(request, 'Paginas_Inicio/pag_principal.html')
+
+@login_required
 @rol_requerido('estudiante')
 def pag_estu(request):
     return render(request, 'Paginas_Inicio/pag_principal.html')
