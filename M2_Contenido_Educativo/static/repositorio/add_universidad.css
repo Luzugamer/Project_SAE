@@ -1,0 +1,76 @@
+.form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--white);
+    padding: 40px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.form-container h1 {
+    font-size: 1.8rem;
+    color: var(--dark-purple);
+    margin-bottom: 30px;
+}
+
+.formulario-universidad p {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.formulario-universidad label {
+    display: block;
+    margin-bottom: 6px;
+    color: #444;
+    font-weight: 600;
+}
+
+.formulario-universidad input,
+.formulario-universidad select,
+.formulario-universidad textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s;
+}
+
+.formulario-universidad input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+}
+
+.btn-submit {
+    background: var(--primary-green);
+    color: var(--white);
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-right: 10px;
+    transition: var(--transition);
+}
+
+.btn-submit:hover {
+    background: #6BC599;
+}
+
+.btn-cancel {
+    display: inline-block;
+    color: var(--dark-purple);
+    background: #f2f2f2;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.btn-cancel:hover {
+    background: #e0e0e0;
+}

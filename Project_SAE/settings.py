@@ -6,7 +6,7 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 SECRET_KEY = config('SECRET_KEY')
 
@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     
     'M1_Gestion_de_Usuarios.apps.M1GestionDeUsuariosConfig',
     'Paginas_Inicio',
+    'M2_Contenido_Educativo',
     
     'cloudinary',
     'cloudinary_storage',
