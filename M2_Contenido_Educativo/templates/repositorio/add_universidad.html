@@ -1,0 +1,46 @@
+{% extends "Paginas_Inicio/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Editar Universidad{% else %}Agregar Universidad{% endif %}
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'repositorio/add_universidad.css' %}">
+
+<div class="form-container">
+    <h1>{% if form.instance.pk %}Editar Universidad{% else %}Agregar Universidad{% endif %}</h1>
+
+    <form method="POST" enctype="multipart/form-data" class="formulario-universidad">
+        {% csrf_token %}
+
+        <div class="form-field">
+            <label for="{{ form.nombre.id_for_label }}">Nombre:</label>
+            {{ form.nombre }}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.pais.id_for_label }}">País:</label>
+            {{ form.pais }}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.logo.id_for_label }}">Logo:</label>
+            {{ form.logo }}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.especialidad.id_for_label }}">Especialidad:</label>
+            {{ form.especialidad }}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.tipo_solucionario.id_for_label }}">Tipo de Solucionario:</label>
+            {{ form.tipo_solucionario }}
+        </div>
+
+        <button type="submit" class="btn-submit">Guardar</button>
+        <a href="{% url 'repositorio' %}" class="btn-cancel">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
