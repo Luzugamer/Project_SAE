@@ -1,0 +1,106 @@
+{% load static %}
+
+{% block title %}Unirse a {{ comunidad.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users"></i> Unirse a la Comunidad
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Información de la comunidad -->
+                    <div class="mb-4">
+                        {% if comunidad.icono %}
+                            <img src="{{ comunidad.icono.url }}" alt="{{ comunidad.nombre }}" 
+                                 class="rounded-circle mb-3" style="width: 80px; height: 80px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                                 style="width: 80px; height: 80px;">
+                                <i class="fas fa-graduation-cap text-white" style="font-size: 2rem;"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <h3 class="text-primary">{{ comunidad.nombre }}</h3>
+                        
+                        {% if comunidad.descripcion %}
+                            <p class="text-muted">{{ comunidad.descripcion }}</p>
+                        {% endif %}
+                        
+                        {% if comunidad.institucion_afiliada %}
+                            <p class="small text-info">
+                                <i class="fas fa-university"></i> {{ comunidad.institucion_afiliada }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <h5 class="text-primary mb-0">{{ miembros_count }}</h5>
+                                    <small class="text-muted">Miembros</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <h5 class="text-success mb-0">{{ comunidad.puntos_prestigio }}</h5>
+                                    <small class="text-muted">Prestigio</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del creador -->
+                    <div class="mb-4">
+                        <p class="small text-muted">
+                            Comunidad creada por <strong>{{ comunidad.creador.get_full_name|default:comunidad.creador.username }}</strong>
+                        </p>
+                        <p class="small text-muted">
+                            <i class="fas fa-calendar-alt"></i> {{ comunidad.fecha_creacion|date:"d/m/Y" }}
+                        </p>
+                    </div>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Al unirte a esta comunidad, podrás participar en discusiones, compartir recursos y colaborar con otros miembros.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Confirmar y Unirse
+                            </button>
+                            <a href="{% url 'lista_comunidades' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6><i class="fas fa-lightbulb text-warning"></i> ¿Qué puedes hacer en esta comunidad?</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-comments text-primary"></i> Participar en chats y discusiones</li>
+                        <li><i class="fas fa-share-alt text-success"></i> Compartir recursos y materiales</li>
+                        <li><i class="fas fa-users text-info"></i> Colaborar con otros estudiantes</li>
+                        <li><i class="fas fa-bell text-warning"></i> Recibir notificaciones importantes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
