@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('Paginas_Inicio.urls')),
     path('', include('M1_Gestion_de_Usuarios.urls')),
+    path('', include('M2_Contenido_Educativo.urls')),
     path('logout/', logout_, name='logout'),
 ] 
 
