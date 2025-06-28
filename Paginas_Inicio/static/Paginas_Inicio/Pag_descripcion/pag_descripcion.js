@@ -1,4 +1,3 @@
-// Efecto parallax y animaciones en scroll
 window.addEventListener('scroll', () => {
     const scrolled = window.pageYOffset;
     const rate = scrolled * -0.5;
@@ -35,7 +34,6 @@ const observer = new IntersectionObserver((entries) => {
             const row = card.getAttribute('data-row');
             
             if (row) {
-                // Animación para cards principales
                 const baseDelay = row === '1' ? 0 : 400;
                 const cardIndex = Array.from(card.parentElement.children).indexOf(card);
                 const cardDelay = cardIndex * 100;
@@ -44,7 +42,6 @@ const observer = new IntersectionObserver((entries) => {
                     card.classList.add('slide-in-right');
                 }, baseDelay + cardDelay);
             } else {
-                // Animación para otros elementos
                 entry.target.classList.add('visible');
             }
             
@@ -53,9 +50,8 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observar elementos para animaciones
 document.addEventListener('DOMContentLoaded', () => {
-    const cards = document.querySelectorAll('.content-card');
+    const cards = document.querySelectorAll('.offer-card');
     const fadeElements = document.querySelectorAll('.fade-in-up');
     
     [...cards, ...fadeElements].forEach((element, index) => {
@@ -66,10 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Smooth scroll
 document.documentElement.style.scrollBehavior = 'smooth';
 
-// Efecto de entrada inicial
 window.addEventListener('load', () => {
     document.querySelector('.hero-content').style.opacity = '1';
     document.querySelector('.hero-content').style.transform = 'translateY(0)';

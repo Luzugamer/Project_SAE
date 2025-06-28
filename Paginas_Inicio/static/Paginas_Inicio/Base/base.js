@@ -1,4 +1,3 @@
-// REEMPLAZAR todo el contenido de base.js con este código mejorado:
 document.addEventListener('DOMContentLoaded', function () {
     const bottomNavbar = document.getElementById('bottomNavbar');
     const navItems = document.querySelectorAll('.nav-item');
@@ -10,34 +9,23 @@ document.addEventListener('DOMContentLoaded', function () {
         navItems.forEach(item => {
             item.classList.remove('active');
             
-            // Verificar si la URL del enlace coincide con la página actual
             const itemHref = item.getAttribute('href');
             if (itemHref && (currentPath === itemHref || currentPath.includes(itemHref))) {
-                item.classList.add('active');
-            }
-            
-            // Verificación especial para la página principal
-            if (currentPath.includes('/principal/') && item.getAttribute('data-page') === 'principal') {
                 item.classList.add('active');
             }
         });
     }
 
-    // Establecer el item activo al cargar la página
     setActiveNavItem();
 
     // Manejar clicks en nav items
     navItems.forEach(item => {
         item.addEventListener('click', function (e) {
-            // NO preventDefault() - permite que los enlaces funcionen normalmente
             
-            // Remover clase active de todos los items
             navItems.forEach(nav => nav.classList.remove('active'));
             
-            // Agregar clase active al item clickeado inmediatamente
             this.classList.add('active');
             
-            // Forzar el estilo visual inmediatamente
             this.style.background = '#22d3ee';
             this.style.color = '#1e293b';
             this.style.fontWeight = '600';
@@ -76,20 +64,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bottomNavbar) {
         let hoverTimeout;
 
-        // Evento para mostrar navbar al hacer hover
         bottomNavbar.addEventListener('mouseenter', function() {
             clearTimeout(hoverTimeout);
             this.style.transform = 'translateX(-50%) translateY(0)';
         });
 
-        // Evento para ocultar navbar al quitar el mouse
         bottomNavbar.addEventListener('mouseleave', function() {
             hoverTimeout = setTimeout(() => {
                 this.style.transform = 'translateX(-50%) translateY(85%)';
-            }, 300); // Pequeño delay para evitar parpadeo
+            }, 500);
         });
 
-        // Mantener visible si el usuario está interactuando con los elementos
         navItems.forEach(item => {
             item.addEventListener('mouseenter', function() {
                 clearTimeout(hoverTimeout);
@@ -126,12 +111,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const touchEndY = e.changedTouches[0].clientY;
                 const touchDiff = touchStartY - touchEndY;
 
-                // Si el usuario hace swipe hacia arriba, mostrar navbar
                 if (touchDiff > 30 && !isNavbarVisible) {
                     this.style.transform = 'translateX(-50%) translateY(0)';
                     isNavbarVisible = true;
                     
-                    // Auto-ocultar después de 3 segundos sin interacción
                     setTimeout(() => {
                         if (isNavbarVisible) {
                             this.style.transform = 'translateX(-50%) translateY(85%)';
@@ -139,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     }, 3000);
                 }
-                // Si el usuario hace swipe hacia abajo, ocultar navbar
                 else if (touchDiff < -30 && isNavbarVisible) {
                     this.style.transform = 'translateX(-50%) translateY(85%)';
                     isNavbarVisible = false;
@@ -148,14 +130,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Funcionalidad adicional: mostrar navbar temporalmente cuando se carga la página
+    // Mostrar navbar temporalmente cuando se carga la página
     if (bottomNavbar) {
-        // Mostrar completamente por 2 segundos al cargar la página
         setTimeout(() => {
             bottomNavbar.style.transform = 'translateX(-50%) translateY(0)';
         }, 500);
 
-        // Luego ocultar automáticamente
         setTimeout(() => {
             bottomNavbar.style.transform = 'translateX(-50%) translateY(85%)';
         }, 2000);

@@ -2,181 +2,269 @@ document.addEventListener('DOMContentLoaded', function() {
     const cardsContainer = document.getElementById('cardsContainer');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    const cards = document.querySelectorAll('.card');
+    const originalCards = Array.from(document.querySelectorAll('.card'));
     
     let currentIndex = 0;
-    const totalCards = cards.length;
+    const totalOriginalCards = originalCards.length;
     const radius = 400;
-    let isAnimating = false; // Flag para controlar que termine la animación
+    let isAnimating = false;
+    let cards = [];
     
-    // Calcular el ángulo entre cada carta
-    const angleStep = 360 / totalCards;
+    // Duración de la transición en milisegundos
+    const TRANSITION_DURATION = 1000;
     
-    function updateCarousel() {
-        // Marcar que está animando
-        isAnimating = true;
+    // Número de clones a cada lado para el efecto infinito
+    const CLONES_COUNT = 2;
+
+    const angleStep = 360 / totalOriginalCards; // Basado en cartas originales
+    
+    // Crear clones para el efecto infinito
+    function createInfiniteCarousel() {
+        // Crear clones al final (primeras cartas)
+        for (let i = 0; i < CLONES_COUNT; i++) {
+            const clone = originalCards[i].cloneNode(true);
+            clone.classList.add('clone', 'clone-end');
+            clone.setAttribute('data-original-index', i);
+            cardsContainer.appendChild(clone);
+        }
         
-        // Rotar el contenedor principal
+        // Crear clones al principio (últimas cartas) - insertarlos al inicio
+        for (let i = totalOriginalCards - CLONES_COUNT; i < totalOriginalCards; i++) {
+            const clone = originalCards[i].cloneNode(true);
+            clone.classList.add('clone', 'clone-start');
+            clone.setAttribute('data-original-index', i);
+            cardsContainer.insertBefore(clone, cardsContainer.firstChild);
+        }
+        
+        // Actualizar el array de cartas
+        cards = Array.from(cardsContainer.querySelectorAll('.card'));
+        
+        // Ajustar el índice inicial para empezar en la primera carta original
+        currentIndex = CLONES_COUNT;
+        
+        console.log('Infinite carousel created:', {
+            originalCards: totalOriginalCards,
+            totalCards: cards.length,
+            startIndex: currentIndex
+        });
+    }
+    
+    function updateCarousel(skipTransition = false) {
+        if (isAnimating && !skipTransition) {
+            console.log('Animation already in progress, blocking update');
+            return;
+        }
+        
+        if (!skipTransition) {
+            isAnimating = true;
+            prevBtn.classList.add('disabled');
+            nextBtn.classList.add('disabled');
+        }
+        
         const rotation = -currentIndex * angleStep;
-        console.log('updateCarousel - rotation:', rotation, 'degrees');
-        cardsContainer.style.transform = `rotateY(${rotation}deg)`;
-        console.log('Applied transform:', cardsContainer.style.transform);
         
-        // Actualizar clases de las cartas para efectos visuales
-        cards.forEach((card, index) => {
+        if (skipTransition) {
+            cardsContainer.style.transition = 'none';
+        } else {
+            cardsContainer.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+        
+        cardsContainer.style.transform = `rotateY(${rotation}deg)`;
+
+        cards.forEach((card) => {
             card.classList.remove('active', 'side', 'back');
-            
-            // Calcular la posición relativa de cada carta
-            let relativeIndex = (index - currentIndex + totalCards) % totalCards;
-            
-            if (relativeIndex === 0) {
+
+            let originalIndex = card.classList.contains('clone')
+                ? parseInt(card.getAttribute('data-original-index'))
+                : cards.indexOf(card) - CLONES_COUNT;
+
+            const cardAngle = (originalIndex * angleStep) - (currentIndex * angleStep);
+            const normalizedAngle = ((cardAngle % 360) + 360) % 360;
+
+            const relativeAngle = normalizedAngle > 180 ? normalizedAngle - 360 : normalizedAngle;
+
+            if (Math.abs(relativeAngle) < angleStep / 2) {
                 card.classList.add('active');
-            } else if (relativeIndex === 1 || relativeIndex === totalCards - 1) {
+            } else if (Math.abs(relativeAngle) < angleStep * 1.5) {
                 card.classList.add('side');
             } else {
                 card.classList.add('back');
             }
         });
+
+
+        if (!skipTransition) {
+            setTimeout(() => {
+                checkAndResetPosition();
+                isAnimating = false;
+                prevBtn.classList.remove('disabled');
+                nextBtn.classList.remove('disabled');
+                updateActiveCardAnimation();
+            }, TRANSITION_DURATION);
+        } else {
+            setTimeout(() => {
+                cardsContainer.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)';
+            }, 50);
+        }
+    }
+    
+    function checkAndResetPosition() {
+        const totalCards = cards.length;
         
-        // Esperar a que termine la animación CSS (300ms + margen de seguridad)
-        setTimeout(() => {
-            isAnimating = false;
-            console.log('Animation completed, ready for next transition');
-        }, 350);
+        // Si estamos en un clon del final, saltar al inicio real
+        if (currentIndex >= totalCards - CLONES_COUNT) {
+            const newIndex = currentIndex - totalOriginalCards;
+            console.log('Reset from end clone:', currentIndex, '→', newIndex);
+            currentIndex = newIndex;
+            updateCarousel(true); // Sin transición
+        }
+        // Si estamos en un clon del inicio, saltar al final real
+        else if (currentIndex < CLONES_COUNT) {
+            const newIndex = currentIndex + totalOriginalCards;
+            console.log('Reset from start clone:', currentIndex, '→', newIndex);
+            currentIndex = newIndex;
+            updateCarousel(true); // Sin transición
+        }
     }
-    
-    function updateNavigationButtons() {
-        // Los botones siempre están habilitados en un carrusel continuo
-        prevBtn.classList.remove('disabled');
-        nextBtn.classList.remove('disabled');
-    }
-    
+
     function nextCard() {
-        // No permitir nueva transición hasta que termine la animación actual
         if (isAnimating) {
-            console.log('Animation in progress, ignoring click');
-            return;
+            console.log('Animation in progress, ignoring nextCard click');
+            return false;
         }
         
         console.log('nextCard called - currentIndex before:', currentIndex);
-        
-        // Avanzar al siguiente índice
-        currentIndex = (currentIndex + 1) % totalCards;
-        
-        // Si llegamos al final, continuar desde el inicio (comportamiento de cinta)
-        if (currentIndex === 0) {
-            console.log('Reached end, continuing from beginning');
-        }
-        
+        currentIndex++;
         console.log('nextCard called - currentIndex after:', currentIndex);
+        
         updateCarousel();
+        return true;
     }
     
     function prevCard() {
-        // No permitir nueva transición hasta que termine la animación actual
         if (isAnimating) {
-            console.log('Animation in progress, ignoring click');
-            return;
+            console.log('Animation in progress, ignoring prevCard click');
+            return false;
         }
         
         console.log('prevCard called - currentIndex before:', currentIndex);
-        
-        // Retroceder al índice anterior
-        currentIndex = (currentIndex - 1 + totalCards) % totalCards;
-        
-        // Si llegamos al inicio yendo hacia atrás, continuar desde el final
-        if (currentIndex === totalCards - 1) {
-            console.log('Reached beginning, continuing from end');
-        }
-        
+        currentIndex--;
         console.log('prevCard called - currentIndex after:', currentIndex);
+        
         updateCarousel();
+        return true;
     }
     
-    // Posicionar las cartas en círculo con mayor radio
+    // Posicionar las cartas en círculo
     function positionCards() {
         cards.forEach((card, index) => {
-            const angle = index * angleStep;
+            // Calcular el ángulo basándose en la posición original
+            let originalIndex;
+            if (card.classList.contains('clone')) {
+                originalIndex = parseInt(card.getAttribute('data-original-index'));
+            } else {
+                originalIndex = index - CLONES_COUNT;
+            }
             
-            // Posicionar cada carta en el círculo
+            const angle = originalIndex * angleStep;
             card.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
         });
     }
     
     // Función para animar el hover de los iconos
     function animateIconHover(icon, scale = 1.1) {
-        icon.style.transform = `scale(${scale})`;
+        if (icon) {
+            icon.style.transform = `scale(${scale})`;
+        }
     }
     
     // Función para la animación flotante
     function startFloatingAnimation(element) {
-        element.style.animation = 'float 3s ease-in-out infinite';
+        if (element) {
+            element.style.animation = 'float 3s ease-in-out infinite';
+        }
     }
     
     function stopFloatingAnimation(element) {
-        element.style.animation = 'none';
+        if (element) {
+            element.style.animation = 'none';
+        }
     }
     
     // Event listeners para navegación
-    nextBtn.addEventListener('click', function() {
-        console.log('Right button clicked!');
-        nextCard();
+    nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
-        // Actualizar animación activa después de que termine la transición
-        setTimeout(() => {
-            if (!isAnimating) {
-                updateActiveCardAnimation();
-            }
-        }, 350);
+        console.log('Right button clicked!');
+        
+        if (isAnimating) {
+            showAnimationFeedback(this);
+            return;
+        }
+        
+        nextCard();
     });
     
-    prevBtn.addEventListener('click', function() {
-        console.log('Left button clicked!');
-        prevCard();
+    prevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
-        // Actualizar animación activa después de que termine la transición
-        setTimeout(() => {
-            if (!isAnimating) {
-                updateActiveCardAnimation();
-            }
-        }, 350);
+        console.log('Left button clicked!');
+        
+        if (isAnimating) {
+            showAnimationFeedback(this);
+            return;
+        }
+        
+        prevCard();
     });
     
     // Click en las cartas para navegar
-    cards.forEach((card, index) => {
-        card.addEventListener('click', function() {
-            if (index !== currentIndex && !isAnimating) {
-                currentIndex = index;
-                updateCarousel();
+    function setupCardClickListeners() {
+        cards.forEach((card, index) => {
+            // Remover listeners anteriores
+            card.replaceWith(card.cloneNode(true));
+        });
+        
+        // Obtener las cartas actualizadas y agregar listeners
+        cards = Array.from(cardsContainer.querySelectorAll('.card'));
+        
+        cards.forEach((card, index) => {
+            card.addEventListener('click', function(e) {
+                if (isAnimating) {
+                    console.log('Animation in progress, ignoring card click');
+                    return;
+                }
                 
-                // Actualizar animación activa después de que termine la transición
-                setTimeout(() => {
-                    if (!isAnimating) {
-                        updateActiveCardAnimation();
-                    }
-                }, 350);
-            }
+                if (index !== currentIndex) {
+                    currentIndex = index;
+                    updateCarousel();
+                }
+            });
+            
+            // Animaciones de hover para cada carta
+            card.addEventListener('mouseenter', function() {
+                if (isAnimating) return;
+                
+                const icon = card.querySelector('.icon');
+                if (card.classList.contains('active')) {
+                    animateIconHover(icon, 1.2);
+                    startFloatingAnimation(icon);
+                } else {
+                    animateIconHover(icon, 1.05);
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                const icon = card.querySelector('.icon');
+                animateIconHover(icon, 1);
+                if (!card.classList.contains('active')) {
+                    stopFloatingAnimation(icon);
+                }
+            });
         });
-        
-        // Animaciones de hover para cada carta
-        card.addEventListener('mouseenter', function() {
-            const icon = card.querySelector('.icon');
-            if (card.classList.contains('active')) {
-                animateIconHover(icon, 1.2);
-                startFloatingAnimation(icon);
-            } else {
-                animateIconHover(icon, 1.05);
-            }
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            const icon = card.querySelector('.icon');
-            animateIconHover(icon, 1);
-            if (!card.classList.contains('active')) {
-                stopFloatingAnimation(icon);
-            }
-        });
-    });
+    }
     
     // Animación especial para la carta activa
     function updateActiveCardAnimation() {
@@ -190,23 +278,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Navegación con teclado
+    // Navegación con teclado con debounce
+    let keyboardTimeout;
     document.addEventListener('keydown', function(e) {
+        if (keyboardTimeout) return;
+        
+        let actionTaken = false;
+        
         if (e.key === 'ArrowLeft') {
-            prevCard();
+            actionTaken = prevCard();
         } else if (e.key === 'ArrowRight') {
-            nextCard();
+            actionTaken = nextCard();
+        }
+        
+        if (actionTaken) {
+            keyboardTimeout = setTimeout(() => {
+                keyboardTimeout = null;
+            }, TRANSITION_DURATION);
         }
     });
-    
-    // Inicializar el carrusel
-    positionCards();
-    updateCarousel();
-    
-    // Esperar a que termine la inicialización para activar animaciones
-    setTimeout(() => {
-        updateActiveCardAnimation();
-    }, 350);
     
     // Soporte para touch/swipe en dispositivos móviles
     let startX = 0;
@@ -216,33 +306,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let isSwipping = false;
     
     cardsContainer.addEventListener('touchstart', function(e) {
-        if (!isAnimating) {
-            const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            isSwipping = true;
-        }
-    });
+        if (isAnimating) return;
+        
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isSwipping = true;
+    }, { passive: true });
     
     cardsContainer.addEventListener('touchmove', function(e) {
         if (isSwipping && !isAnimating) {
-            e.preventDefault(); // Prevenir scroll
+            e.preventDefault();
         }
     });
     
     cardsContainer.addEventListener('touchend', function(e) {
-        if (!isSwipping || isAnimating) return;
+        if (!isSwipping || isAnimating) {
+            isSwipping = false;
+            return;
+        }
         
         const touch = e.changedTouches[0];
         distX = touch.clientX - startX;
         distY = touch.clientY - startY;
         
-        // Solo si el swipe es más horizontal que vertical
         if (Math.abs(distX) > Math.abs(distY) && Math.abs(distX) > 50) {
             if (distX > 0) {
-                prevCard(); // Swipe derecha = anterior
+                prevCard();
             } else {
-                nextCard(); // Swipe izquierda = siguiente
+                nextCard();
             }
         }
         
@@ -251,29 +343,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Animaciones para los botones de navegación
     function animateButton(button, scale = 1.15) {
-        button.style.transform = `scale(${scale}) translateY(-50%)`;
+        if (!button.classList.contains('disabled')) {
+            button.style.transform = `scale(${scale}) translateY(-50%)`;
+        }
     }
     
     // Event listeners para animaciones de botones
     [prevBtn, nextBtn].forEach(button => {
         button.addEventListener('mouseenter', function() {
-            if (!isAnimating) {
+            if (!isAnimating && !this.classList.contains('disabled')) {
                 animateButton(this, 1.15);
             }
         });
         
         button.addEventListener('mouseleave', function() {
-            animateButton(this, 1);
+            if (!this.classList.contains('disabled')) {
+                animateButton(this, 1);
+            }
         });
         
         button.addEventListener('mousedown', function() {
-            if (!isAnimating) {
+            if (!isAnimating && !this.classList.contains('disabled')) {
                 animateButton(this, 1.05);
             }
         });
         
         button.addEventListener('mouseup', function() {
-            if (!isAnimating) {
+            if (!isAnimating && !this.classList.contains('disabled')) {
                 animateButton(this, 1.15);
             }
         });
@@ -284,17 +380,17 @@ document.addEventListener('DOMContentLoaded', function() {
         button.style.opacity = '0.5';
         setTimeout(() => {
             button.style.opacity = '1';
-        }, 100);
+        }, 150);
     }
     
-    // Agregar feedback visual a los botones cuando no se puede navegar
-    [prevBtn, nextBtn].forEach(button => {
-        const originalClick = button.onclick;
-        button.addEventListener('click', function(e) {
-            if (isAnimating) {
-                showAnimationFeedback(this);
-                e.stopPropagation();
-            }
-        });
-    });
+    // Inicializar el carrusel infinito
+    createInfiniteCarousel();
+    positionCards();
+    setupCardClickListeners();
+    updateCarousel(true); // Inicializar sin transición
+    
+    // Inicializar animación activa
+    setTimeout(() => {
+        updateActiveCardAnimation();
+    }, 100);
 });
