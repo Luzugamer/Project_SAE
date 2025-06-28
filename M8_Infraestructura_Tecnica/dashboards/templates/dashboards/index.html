@@ -1,0 +1,20 @@
+{% extends "dashboards/base.html" %}
+
+{% block title %}Panel Principal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Bienvenido al Dashboard</h1>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Resumen</h5>
+                <p class="card-text">Contenido principal del dashboard.</p>
+                <a href="{% url 'dashboards:list' %}" class="btn btn-primary">
+                    Ver todos los dashboards
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

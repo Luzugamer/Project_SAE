@@ -1,16 +1,21 @@
 from pathlib import Path
 import os
+import sys
 import dj_database_url
 from decouple import config
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 SECRET_KEY = config('SECRET_KEY')
 
 ALLOWED_HOSTS = ['*']
+
+sys.path.insert(0, os.path.join(BASE_DIR)) 
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -25,7 +30,11 @@ INSTALLED_APPS = [
     
     'M1_Gestion_de_Usuarios.apps.M1GestionDeUsuariosConfig',
     'Paginas_Inicio',
-    
+    'M8_Infraestructura_Tecnica.dashboards.apps.DashboardsConfig',
+    'M8_Infraestructura_Tecnica.accesibilidad.apps.AccesibilidadConfig',
+    'M8_Infraestructura_Tecnica.accesibilidad.modo_nocturno',
+    'M8_Infraestructura_Tecnica.accesibilidad.ajustes_ui.apps.AjustesUiConfig',
+
     'cloudinary',
     'cloudinary_storage',
     
@@ -52,7 +61,7 @@ ROOT_URLCONF = 'Project_SAE.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -1,0 +1,8 @@
+# Middleware para detección de dispositivo (RQ05)
+class MobileMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        request.is_mobile = 'Mobile' in request.META.get('HTTP_USER_AGENT', '')
+        return self.get_response(request)
