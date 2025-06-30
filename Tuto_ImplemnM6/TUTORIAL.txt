@@ -1,0 +1,249 @@
+--------------------------------Paso 1 ejecuta:---------------------------------
+# pip install google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
+
+------------------------2. CONFIGURACIÓN EN settings.py-------------------------------------
+# Agrega estas configuraciones a tu settings.py
+
+import os
+from pathlib import Path
+
+# Google Drive API Configuration
+import os
+GOOGLE_DRIVE_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'M6_Comunidades', 'credentials', 'google_drive_credentials.json')
+GOOGLE_DRIVE_TOKEN_FILE = os.path.join(BASE_DIR, 'M6_Comunidades', 'credentials', 'google_drive_token.json')
+GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive']
+
+# Logging para debug
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'google_drive.log',
+        },
+    },
+    'loggers': {
+        'M6_Comunidades.google_drive_service': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+
+------------------------3. SERVICIO DE GOOGLE DRIVE (google_drive_service.py)--------------------------------
+--------OJO: EN LA SIGUIENTE LINEA DE CODIGO:    creds = flow.run_local_server(port=8888, access_type='offline', prompt='consent')-----
+--------LA RUTA DEL PUERTO DEBE ESTAR EN LA CONSOLA DE LAS CREDENCIALES DE LOS USUARIOS OAuth 2.0 
+--------LA QUE SE ESTÁ USANDO ES EL CLIENTE George y las URL de redireccionamiento autorizadas ya están definidas
+--------SI SE QUISIERA AGREGAR ALGUNA RUTA ESPECIFICA: Clich en el lapiz de el apartado "Acciones" luego escrolear hasta URIs de redireccionamiento autorizados Y AÑADIR LA QUE SE QUIERA
+--------EN ESTE CASO SE CONFIGURÓ LA url: http://localhost:8888/ de redireccionamiento
+	
+
+from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.http import MediaIoBaseUpload
+import json
+import io
+import os
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+class GoogleDriveService:
+    def __init__(self):
+        self.service = None
+        self.authenticate()
+    
+    def authenticate(self):
+        """Autenticar con Google Drive API"""
+        creds = None
+        
+        # Cargar token existente si existe
+        if os.path.exists(settings.GOOGLE_DRIVE_TOKEN_FILE):
+            creds = Credentials.from_authorized_user_file(
+                settings.GOOGLE_DRIVE_TOKEN_FILE, 
+                settings.GOOGLE_DRIVE_SCOPES
+            )
+        
+        # Si no hay credenciales válidas, autenticar
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    settings.GOOGLE_DRIVE_CREDENTIALS_FILE,
+                    settings.GOOGLE_DRIVE_SCOPES
+                )
+                creds = flow.run_local_server(port=8888, access_type='offline', prompt='consent')
+            
+            # Guardar credenciales para futuras ejecuciones
+            with open(settings.GOOGLE_DRIVE_TOKEN_FILE, 'w') as token:
+                token.write(creds.to_json())
+        
+        self.service = build('drive', 'v3', credentials=creds)
+    
+    def create_folder(self, folder_name, parent_folder_id=None):
+        """Crear una carpeta en Google Drive"""
+        try:
+            file_metadata = {
+                'name': folder_name,
+                'mimeType': 'application/vnd.google-apps.folder'
+            }
+            
+            if parent_folder_id:
+                file_metadata['parents'] = [parent_folder_id]
+            
+            folder = self.service.files().create(
+                body=file_metadata,
+                fields='id, name'
+            ).execute()
+            
+            logger.info(f"Carpeta '{folder_name}' creada con ID: {folder.get('id')}")
+            return folder.get('id')
+            
+        except Exception as e:
+            logger.error(f"Error creando carpeta '{folder_name}': {str(e)}")
+            return None
+    
+    def delete_folder(self, folder_id):
+        """Eliminar una carpeta de Google Drive"""
+        try:
+            self.service.files().delete(fileId=folder_id).execute()
+            logger.info(f"Carpeta con ID '{folder_id}' eliminada exitosamente")
+            return True
+        except Exception as e:
+            logger.error(f"Error eliminando carpeta con ID '{folder_id}': {str(e)}")
+            return False
+    
+    def upload_file(self, file_content, filename, folder_id, mime_type='text/plain'):
+        """Subir un archivo a una carpeta específica"""
+        try:
+            file_metadata = {
+                'name': filename,
+                'parents': [folder_id]
+            }
+            
+            media = MediaIoBaseUpload(
+                io.BytesIO(file_content.encode('utf-8')),
+                mimetype=mime_type
+            )
+            
+            file = self.service.files().create(
+                body=file_metadata,
+                media_body=media,
+                fields='id, name'
+            ).execute()
+            
+            logger.info(f"Archivo '{filename}' subido con ID: {file.get('id')}")
+            return file.get('id')
+            
+        except Exception as e:
+            logger.error(f"Error subiendo archivo '{filename}': {str(e)}")
+            return None
+    
+    def update_file(self, file_id, new_content):
+        """Actualizar el contenido de un archivo existente"""
+        try:
+            media = MediaIoBaseUpload(
+                io.BytesIO(new_content.encode('utf-8')),
+                mimetype='text/plain'
+            )
+            
+            self.service.files().update(
+                fileId=file_id,
+                media_body=media
+            ).execute()
+            
+            logger.info(f"Archivo con ID '{file_id}' actualizado exitosamente")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error actualizando archivo con ID '{file_id}': {str(e)}")
+            return False
+    
+    def search_files_in_folder(self, folder_id, filename=None):
+        """Buscar archivos en una carpeta específica"""
+        try:
+            query = f"'{folder_id}' in parents and trashed=false"
+            if filename:
+                query += f" and name='{filename}'"
+            
+            results = self.service.files().list(
+                q=query,
+                fields="files(id, name, modifiedTime)"
+            ).execute()
+            
+            return results.get('files', [])
+            
+        except Exception as e:
+            logger.error(f"Error buscando archivos en carpeta '{folder_id}': {str(e)}")
+            return []
+
+
+------------------PASO 4 IMPORTANTE: ESTRUCTURA DE ARCHIVOS---------------------------------------
+
+Crea la siguiente estructura en tu proyecto Django:
+M6_Comunidades/
+├── management/
+│   └── commands/
+│       └── setup_google_drive.py
+├── utils/
+│   └── google_drive_utils.py
+├── google_drive_service.py
+├── signals.py
+├── models.py (modificado)
+└── apps.py (modificado)
+credentials/
+├── google_drive_credentials.json  # Archivo descargado de Google Cloud
+ ── google_drive_token.json        # Se generará automáticamente
+
+----------------google_drive_credentials.json-----------------------------
+{"web":{"client_id":"365440040660-4lbgfapdr2b3avp9u9d69qkoua48aa7u.apps.googleusercontent.com","project_id":"m6comunidades","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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"}}
+
+
+-----------------------PASO 5: EJECUTAR CONFIGURACION LOCAL INICIAL -------------------------------------------------------------
+python manage.py setup_google_drive
+
+-----------------------PASO 6: CREAR UNA .log para verificar las creaciones de las carpetas creadas en el drive------------------------------
+
+M6_Comunidades/
+├── google_drive.log
+
+Si se crea automáticamente no es necesario
+
+------------------------PASO 6: OTRAS CONFIGURACIONES-------------------------
+------------urls.py 
+
+    path('comunidad/', include(('M6_Comunidades.urls', 'M6_Comunidades'), namespace='comunidad')),
+
+-----------base.html
+#renderizacion para docentes:
+                        <a href="{% url 'comunidad:principio' %}" class="nav-item" data-page="comunidad">
+                        <svg class="nav-icon" viewBox="0 0 24 24">
+                                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-1c0-1.38.56-2.63 1.46-3.54l.64-.64.78.78c-.92.92-1.48 2.19-1.48 3.58v1H4zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM8.5 12A1.5 1.5 0 0010 13.5 1.5 1.5 0 008.5 15 1.5 1.5 0 007 13.5 1.5 1.5 0 008.5 12z"/>
+                            </svg>
+                            Comunidad
+                        </a>
+
+#renderizacion para estudiantes
+
+                        <a href="{% url 'comunidad:inicio' %}" class="nav-item" data-page="comunidad">
+                            <svg class="nav-icon" viewBox="0 0 24 24">
+                                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-1c0-1.38.56-2.63 1.46-3.54l.64-.64.78.78c-.92.92-1.48 2.19-1.48 3.58v1H4zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zM8.5 12A1.5 1.5 0 0010 13.5 1.5 1.5 0 008.5 15 1.5 1.5 0 007 13.5 1.5 1.5 0 008.5 12z"/>
+                            </svg>
+                            Comunidad
+                        </a>
+
+
+
+
+
+
+
+
