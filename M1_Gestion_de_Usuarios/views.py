@@ -13,7 +13,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .forms import UsuarioRegistroForm, UsuarioLoginForm, OTPVerificationForm, Setup2FAForm, DispositivoConfiableForm, CambiarPasswordForm
-from .models import UsuarioRol, Usuario, DispositivoUsuario, NotificacionSeguridad
+from .models import Usuario, DispositivoUsuario, NotificacionSeguridad
 from .utils import detectar_patron_login_sospechoso, get_client_ip, get_location_from_ip, enviar_notificacion_email
 
 def registro_view(request):
@@ -89,28 +89,24 @@ def login_view(request):
 
 
 def complete_login(request, user, dispositivo):
-    """Completa el proceso de login"""
-    try:
-        usuario_rol = UsuarioRol.objects.get(usuario=user)
-        rol_usuario = usuario_rol.rol.nombre_rol
-        
-        user.ultima_sesion = timezone.now()
-        user.save()
-        login(request, user)
-        
-        # Redireccionar según rol
-        if rol_usuario == 'admin':
-            return redirect('/admin/')
-        elif rol_usuario == 'profesor':
-            return redirect('pag_profe')
-        elif rol_usuario == 'estudiante':
-            return redirect('pag_estu')
-        else:
-            return redirect('pag_estu')
-            
-    except UsuarioRol.DoesNotExist:
+    """Completa el proceso de login con la nueva estructura de roles"""
+    # Actualizar última sesión
+    user.ultima_sesion = timezone.now()
+    user.save()
+    login(request, user)
+    
+    # Redireccionar según rol (ahora accedemos directamente al campo rol)
+    if not user.rol:  # Si no tiene rol asignado
         messages.error(request, 'Usuario sin rol asignado. Contacte al administrador.')
         return redirect('login')
+    
+    # Redirecciones basadas en el rol
+    if user.rol == 'administrador':
+        return redirect('/admin/')
+    elif user.rol == 'profesor':
+        return redirect('pag_profe')
+    else:
+        return redirect('pag_estu')
 
 
 @login_required

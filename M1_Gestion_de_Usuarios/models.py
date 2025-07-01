@@ -5,40 +5,41 @@ import qrcode
 from io import BytesIO
 import base64
 from cloudinary.models import CloudinaryField
+from django.contrib.auth.base_user import BaseUserManager
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo_electronico, nombre, apellido, password=None, **extra_fields):
+        """
+        Crea y guarda un usuario con el correo electrónico, nombre, apellido y password.
+        """
         if not correo_electronico:
             raise ValueError("El correo electrónico es obligatorio")
+        
         correo_electronico = self.normalize_email(correo_electronico)
-        user = self.model(correo_electronico=correo_electronico, nombre=nombre, apellido=apellido, **extra_fields)
+        user = self.model(
+            correo_electronico=correo_electronico,
+            nombre=nombre,
+            apellido=apellido,
+            **extra_fields
+        )
         user.set_password(password)
         user.save(using=self._db)
-
-        # Asignar rol por defecto "estudiante" solo si no es staff/superuser
-        if not user.is_staff and not user.is_superuser:
-            rol_estudiante, created = Rol.objects.get_or_create(
-                nombre_rol='estudiante',
-                defaults={'descripcion': 'Rol por defecto para estudiantes'}
-            )
-            UsuarioRol.objects.create(usuario=user, rol=rol_estudiante)
-
         return user
 
     def create_superuser(self, correo_electronico, nombre, apellido, password=None, **extra_fields):
+        """
+        Crea y guarda un superusuario con los permisos adecuados.
+        """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-
-        user = self.create_user(correo_electronico, nombre, apellido, password, **extra_fields)
-
-        # Asignar rol de admin al superusuario
-        rol_admin, created = Rol.objects.get_or_create(
-            nombre_rol='admin',
-            defaults={'descripcion': 'Administrador del sistema'}
-        )
-        UsuarioRol.objects.create(usuario=user, rol=rol_admin)
-
-        return user
+        extra_fields.setdefault('rol', 'administrador')  # Asigna directamente el rol
+        
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superusuario debe tener is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superusuario debe tener is_superuser=True.')
+        
+        return self.create_user(correo_electronico, nombre, apellido, password, **extra_fields)
 
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
@@ -60,6 +61,13 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     direccion = models.CharField(max_length=255, blank=True, null=True)
     sobre_mi = models.TextField(blank=True, null=True, verbose_name="Sobre mí")
 
+    ROLES = (
+        ('estudiante', 'Estudiante'),
+        ('profesor', 'Profesor'),
+        ('administrador', 'Administrador')
+    )
+    
+    rol = models.CharField(max_length=20, choices=ROLES, default='estudiante')
 
     # Campos para 2FA
     otp_secret_key = models.CharField(max_length=32, blank=True, null=True)
@@ -111,22 +119,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
         totp = pyotp.TOTP(self.otp_secret_key)
         return totp.verify(otp_code, valid_window=1)
-
-
-class Rol(models.Model):
-    nombre_rol = models.CharField(max_length=255, unique=True)
-    descripcion = models.TextField()
-
-    def __str__(self):
-        return self.nombre_rol
-
-
-class UsuarioRol(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    rol = models.ForeignKey(Rol, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('usuario', 'rol')
 
 
 class DispositivoUsuario(models.Model):

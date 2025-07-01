@@ -130,7 +130,7 @@
         </p>
     {% endfor %}
 
-    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+    {% if user.is_authenticated and user.rol == 'profesor' %}
         <div class="tarjeta tarjeta-agregar">
             <a href="{% url 'add_universidad' %}" style="text-decoration: none; color: inherit;">
                 <div class="icono-mas">+</div>

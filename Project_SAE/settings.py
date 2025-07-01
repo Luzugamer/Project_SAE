@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'M1_Gestion_de_Usuarios.apps.M1GestionDeUsuariosConfig',
     'Paginas_Inicio',
     'M2_Contenido_Educativo',
+    'M6_Comunidad_y_Colaboración',
     
     'cloudinary',
     'cloudinary_storage',
@@ -130,6 +131,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
+
+
+GOOGLE_DRIVE_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'M6_Comunidades', 'credentials', 'google_drive_credentials.json')
+GOOGLE_DRIVE_TOKEN_FILE = os.path.join(BASE_DIR, 'M6_Comunidades', 'credentials', 'google_drive_token.json')
+GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive']
+GOOGLE_DRIVE_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'google_drive_credentials.json')
 
 LOGGING = {
     'version': 1,

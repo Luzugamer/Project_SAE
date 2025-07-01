@@ -1,0 +1,348 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Nueva Comunidad</title>
+    {% include 'foro/estilosdos.html' %}
+</head>
+<!-- Partículas flotantes -->
+<div class="floating-particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card main-card fade-in-up">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus"></i> Invitar Estudiantes a {{ comunidad.nombre }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes de éxito/error -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 12px; backdrop-filter: blur(5px);">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Tabs de navegación -->
+                    <ul class="nav nav-tabs" id="invitationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="codigo-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#codigo" type="button" role="tab">
+                                <i class="fas fa-key"></i> Código de Invitación
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="enlace-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#enlace" type="button" role="tab">
+                                <i class="fas fa-link"></i> Enlace de Invitación
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="email-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#email" type="button" role="tab">
+                                <i class="fas fa-envelope"></i> Invitar por Email
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="invitationTabsContent">
+                        <!-- Tab 1: Código de Invitación -->
+                        <div class="tab-pane fade show active" id="codigo" role="tabpanel">
+                            <div class="text-center">
+                                <h5 class="mb-3">Código de Invitación</h5>
+                                <p class="text-muted">Comparte este código con los estudiantes para que se unan a la comunidad</p>
+                                
+                                <div class="codigo-container">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <span class="badge badge-codigo me-3" id="codigoInvitacion">
+                                            {{ comunidad.codigo_invitacion }}
+                                        </span>
+                                        <button class="btn btn-outline-secondary btn-modern" 
+                                                onclick="copiarCodigo()" title="Copiar código">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <form method="post" action="{% url 'comunidad:regenerar_codigo' comunidad.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-warning btn-modern"
+                                                onclick="return confirm('¿Estás seguro de regenerar el código? El código actual dejará de funcionar.')">
+                                            <i class="fas fa-sync-alt"></i> Regenerar Código
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Enlace de Invitación -->
+                        <div class="tab-pane fade" id="enlace" role="tabpanel">
+                            <div class="text-center">
+                                <h5 class="mb-3">Enlace de Invitación</h5>
+                                <p class="text-muted">Comparte este enlace directamente con los estudiantes</p>
+                                
+                                <div class="input-group input-group-glass mb-3">
+                                    <input type="text" class="form-control" id="enlaceInvitacion" 
+                                           value="{{ request.build_absolute_uri }}{% url 'comunidad:unirse_por_invitacion' comunidad.codigo_invitacion %}" 
+                                           readonly>
+                                    <button class="btn" type="button" 
+                                            onclick="copiarEnlace()" title="Copiar enlace">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <a href="https://wa.me/?text={{ enlace_whatsapp }}" 
+                                           target="_blank" class="btn btn-success btn-modern w-100">
+                                            <i class="fab fa-whatsapp"></i> Compartir por WhatsApp
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <a href="mailto:?subject=Invitación a {{ comunidad.nombre }}&body={{ enlace_email }}" 
+                                           class="btn btn-info btn-modern w-100">
+                                            <i class="fas fa-envelope"></i> Compartir por Email
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Invitar por Email -->
+                        <div class="tab-pane fade" id="email" role="tabpanel">
+                            <h5 class="mb-3">Invitar Estudiantes por Email</h5>
+                            <p class="text-muted">Envía invitaciones personalizadas directamente al correo de los estudiantes</p>
+                            
+                            <form method="post" action="{% url 'comunidad:enviar_invitaciones_email' comunidad.id %}">
+                                {% csrf_token %}
+                                
+                                <!-- Emails individuales -->
+                                <div class="mb-3">
+                                    <label for="emails" class="form-label fw-bold">Correos Electrónicos</label>
+                                    <textarea class="form-control form-control-modern" id="emails" name="emails" rows="4" 
+                                              placeholder="Ingresa los emails separados por comas o uno por línea&#10;ejemplo@correo.com, otro@correo.com&#10;tercero@correo.com"></textarea>
+                                    <div class="form-text">Separa múltiples emails con comas o saltos de línea</div>
+                                </div>
+
+                                <!-- Mensaje personalizado -->
+                                <div class="mb-3">
+                                    <label for="mensaje_personalizado" class="form-label fw-bold">Mensaje Personalizado (Opcional)</label>
+                                    <textarea class="form-control form-control-modern" id="mensaje_personalizado" name="mensaje_personalizado" 
+                                              rows="3" placeholder="Agrega un mensaje personal a la invitación..."></textarea>
+                                </div>
+
+                                <!-- Botón de envío -->
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-modern">
+                                        <i class="fas fa-paper-plane"></i> Enviar Invitaciones
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div class="mt-4 info-section">
+                        <h6><i class="fas fa-info-circle text-primary"></i> Información</h6>
+                        <ul class="mb-0 small">
+                            <li>Los estudiantes podrán unirse usando el código de invitación en la página principal</li>
+                            <li>El enlace de invitación los llevará directamente a unirse a la comunidad</li>
+                            <li>Las invitaciones por email incluyen instrucciones detalladas</li>
+                            <li>Puedes regenerar el código si es necesario (invalidará el código anterior)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Estadísticas de la comunidad -->
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3">
+                                <div class="card stat-card primary">
+                                    <div class="card-body">
+                                        <h5 class="text-primary mb-2">{{ comunidad.get_miembros_activos.count }}</h5>
+                                        <small class="text-muted fw-bold">Miembros Activos</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card stat-card success">
+                                    <div class="card-body">
+                                        <h5 class="text-success mb-2">{{ invitaciones_pendientes }}</h5>
+                                        <small class="text-muted fw-bold">Invitaciones Pendientes</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card stat-card info">
+                                    <div class="card-body">
+                                        <h5 class="text-info mb-2">{{ comunidad.puntos_prestigio }}</h5>
+                                        <small class="text-muted fw-bold">Puntos de Prestigio</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de navegación -->
+                    <div class="mt-4 d-flex justify-content-between flex-wrap gap-2">
+                        <a href="{% url 'comunidad:comunidad_detalle' comunidad.id %}" class="btn btn-secondary btn-modern">
+                            <i class="fas fa-arrow-left"></i> Volver a la Comunidad
+                        </a>
+                        <a href="{% url 'comunidad:gestionar_miembros' comunidad.id %}" class="btn btn-outline-primary btn-modern">
+                            <i class="fas fa-users-cog"></i> Gestionar Miembros
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para regenerar código -->
+<div class="modal fade" id="confirmarRegeneracion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content modal-content-modern">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Regeneración</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas regenerar el código de invitación?</p>
+                <p class="text-warning"><strong>Advertencia:</strong> El código actual dejará de funcionar y cualquier enlace compartido previamente será inválido.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-modern" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning btn-modern" onclick="regenerarCodigo()">Regenerar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Función para copiar el código de invitación
+function copiarCodigo() {
+    const codigo = document.getElementById('codigoInvitacion').textContent.trim();
+    navigator.clipboard.writeText(codigo).then(function() {
+        mostrarNotificacion('Código copiado al portapapeles', 'success');
+    }).catch(function() {
+        // Fallback para navegadores que no soportan clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = codigo;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        mostrarNotificacion('Código copiado al portapapeles', 'success');
+    });
+}
+
+// Función para copiar el enlace de invitación
+function copiarEnlace() {
+    const enlace = document.getElementById('enlaceInvitacion');
+    enlace.select();
+    enlace.setSelectionRange(0, 99999); // Para móviles
+    
+    navigator.clipboard.writeText(enlace.value).then(function() {
+        mostrarNotificacion('Enlace copiado al portapapeles', 'success');
+    }).catch(function() {
+        document.execCommand('copy');
+        mostrarNotificacion('Enlace copiado al portapapeles', 'success');
+    });
+}
+
+// Función mejorada para mostrar notificaciones
+function mostrarNotificacion(mensaje, tipo) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = `
+        top: 20px; 
+        right: 20px; 
+        z-index: 9999; 
+        min-width: 300px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        animation: slideInRight 0.5s ease-out;
+    `;
+    alertDiv.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas ${tipo === 'success' ? 'fa-check-circle' : tipo === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>
+            ${mensaje}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remover después de 4 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.style.animation = 'slideOutRight 0.5s ease-in forwards';
+            setTimeout(() => alertDiv.remove(), 500);
+        }
+    }, 4000);
+}
+
+// Animaciones CSS adicionales
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Validación del formulario de emails
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action*="enviar_invitaciones_email"]');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const emailsTextarea = document.getElementById('emails');
+            const emails = emailsTextarea.value.trim();
+            
+            if (!emails) {
+                e.preventDefault();
+                mostrarNotificacion('Por favor, ingresa al menos un email', 'warning');
+                emailsTextarea.focus();
+                return false;
+            }
+            
+            // Validación básica de formato de emails
+            const emailList = emails.split(/[,\n]/).map(email => email.trim()).filter(email => email);
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const invalidEmails = emailList.filter(email => !emailRegex.test(email));
