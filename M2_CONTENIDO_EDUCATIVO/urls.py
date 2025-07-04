@@ -5,9 +5,6 @@ urlpatterns = [
     # Vista principal del repositorio
     path('repositorio/', views.vista_repositorio, name='repositorio'),
 
-    # Vista para mostrar exámenes por universidad (opcional)
-    path('repositorio/universidad/<int:universidad_id>/', views.vista_examenes_universidad, name='examenes_universidad'),
-
     # Endpoint AJAX para cargar exámenes dinámicamente
     path('repositorio/universidad/<int:universidad_id>/examenes/', views.examenes_ajax, name='examenes_ajax'),
 
