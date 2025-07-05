@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     'Login.apps.LoginConfig',
     'Pages',
     'M2_CONTENIDO_EDUCATIVO',
+    'M3_ESCANER_REPOSITORIO',
+    'M3_GENERADOR_EXAMENES',
+    'M3_EXAMENES_SIMULACROS',
     'bootstrap5'
 ]
 
