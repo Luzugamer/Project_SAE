@@ -6,6 +6,7 @@ from io import BytesIO
 import base64
 from cloudinary.models import CloudinaryField
 from django.contrib.auth.base_user import BaseUserManager
+from cloudinary.models import CloudinaryField as BaseCloudinaryField
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo_electronico, nombre, apellido, password=None, **extra_fields):
@@ -41,6 +42,13 @@ class UsuarioManager(BaseUserManager):
         
         return self.create_user(correo_electronico, nombre, apellido, password, **extra_fields)
 
+class CloudinaryField(BaseCloudinaryField):
+    def upload_options(self, model_instance):
+        return {
+            'folder': 'usuarios/fotos_perfil',  # carpeta en Cloudinary
+            'overwrite': True,
+            'unique_filename': False,
+        }
 
 class Usuario(AbstractBaseUser, PermissionsMixin):
     nombre = models.CharField(max_length=255)
@@ -50,7 +58,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
-    foto_perfil = CloudinaryField('foto_perfil', blank=True, null=True)
+    foto_perfil = CloudinaryField('foto_perfil')
 
     ultima_sesion = models.DateTimeField(null=True, blank=True)
     cierre_sesion = models.DateTimeField(null=True, blank=True)

@@ -132,12 +132,6 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 
-
-GOOGLE_DRIVE_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'M6_Comunidades', 'credentials', 'google_drive_credentials.json')
-GOOGLE_DRIVE_TOKEN_FILE = os.path.join(BASE_DIR, 'M6_Comunidades', 'credentials', 'google_drive_token.json')
-GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive']
-GOOGLE_DRIVE_CREDENTIALS_FILE = os.path.join(BASE_DIR, 'google_drive_credentials.json')
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

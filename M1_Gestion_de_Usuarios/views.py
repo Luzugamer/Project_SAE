@@ -15,6 +15,7 @@ from django.views.decorators.http import require_http_methods
 from .forms import UsuarioRegistroForm, UsuarioLoginForm, OTPVerificationForm, Setup2FAForm, DispositivoConfiableForm, CambiarPasswordForm
 from .models import Usuario, DispositivoUsuario, NotificacionSeguridad
 from .utils import detectar_patron_login_sospechoso, get_client_ip, get_location_from_ip, enviar_notificacion_email
+from cloudinary import CloudinaryImage
 
 def registro_view(request):
     if request.method == 'POST':
@@ -165,6 +166,16 @@ def perfil_usuario_view(request):
     return render(request, 'M1_Gestion_de_Usuarios/perfil_usuario.html', {
         'usuario': request.user
     })
+    
+def perfil_image(request):
+    img = CloudinaryImage(
+        request.user.foto_perfil.public_id
+        if request.user.foto_perfil else ''
+    ).build_url(
+        width=200, height=200, crop="thumb",
+        default_image="usuarios/fotos_perfil/default_image.png"
+    )
+    return render(request, 'perfil.html', {'perfil_url': img})
 
 @never_cache
 def logout_(request):
