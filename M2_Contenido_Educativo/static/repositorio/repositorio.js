@@ -316,25 +316,44 @@ function confirmarEliminarExamen(examenId) {
 
 
 function confirmarEliminarRepositorio(universidadId) {
-    mostrarModal("¿Seguro que quiere eliminar este repositorio?", () => {
+    mostrarModal("¿Seguro que quiere eliminar este repositorio? Esta acción no se puede deshacer.", () => {
+        const btn = document.querySelector(`.btn-eliminar-repositorio[onclick*="${universidadId}"]`);
+        if (btn) btn.classList.add('loading');
+
         fetch(`/repositorio/universidad/${universidadId}/eliminar/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': window.csrfToken,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({}) // Envía un objeto vacío como body
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(text) });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification(data.message, 'success');
+                // Eliminar la tarjeta del DOM con animación
+                const tarjeta = document.querySelector(`.tarjeta[data-universidad-id="${universidadId}"]`);
+                tarjeta.style.transition = 'all 0.3s ease';
+                tarjeta.style.opacity = '0';
+                tarjeta.style.transform = 'translateX(100px)';
+                setTimeout(() => tarjeta.remove(), 300);
+            } else {
+                throw new Error(data.message || 'Error al eliminar');
             }
         })
-        .then(res => {
-            if (!res.ok) throw new Error('Error al eliminar');
-            return res.json();
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification(error.message || 'Error al eliminar el repositorio', 'error');
         })
-        .then(() => {
-            showNotification('Repositorio eliminado');
-            location.reload(); // o eliminarlo del DOM si no quieres recargar
-        })
-        .catch(err => {
-            console.error(err);
-            showNotification('Error al eliminar', 'error');
+        .finally(() => {
+            if (btn) btn.classList.remove('loading');
         });
     });
 }
@@ -492,6 +511,67 @@ function setupFiltroAnimado() {
     }
 }
 
+
+
+// Cerrar vista previa al hacer clic fuera
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.examen-item') && !e.target.closest('.pdf-preview-container')) {
+        document.querySelectorAll('.pdf-preview-container').forEach(container => {
+            container.classList.remove('active');
+        });
+    }
+});
+
+// Mejorar la animación de los filtros
+function setupFiltroAnimado() {
+    const boton = document.getElementById('toggle-opciones');
+    const contenedor = document.getElementById('contenedor-filtros');
+
+    if (boton && contenedor) {
+        boton.addEventListener('click', () => {
+            if (contenedor.classList.contains('show')) {
+                contenedor.classList.remove('show');
+                setTimeout(() => {
+                    contenedor.style.display = 'none';
+                }, 300);
+            } else {
+                contenedor.style.display = 'flex';
+                setTimeout(() => {
+                    contenedor.classList.add('show');
+                }, 10);
+            }
+            boton.classList.toggle('active');
+        });
+    }
+}
+
+function editarExamenDesdeDataset(button) {
+    // Agregar clase de animación
+    button.classList.add('clicked');
+    
+    // Eliminar la clase después de la animación
+    setTimeout(() => {
+        button.classList.remove('clicked');
+    }, 300);
+    
+    // Resto de tu código existente...
+    const universidadId = button.dataset.universidadId;
+    const examenId = button.dataset.examenId;
+    const nombre = button.dataset.nombre;
+    const fecha = button.dataset.fecha;
+    
+    editarExamen(universidadId, examenId, nombre, fecha);
+}
+
+document.querySelectorAll('.btn-editar-repositorio').forEach(btn => {
+    btn.addEventListener('click', function() {
+        this.classList.add('loading');
+        // Remover la clase después de 2 segundos (solo para demo)
+        setTimeout(() => {
+            this.classList.remove('loading');
+        }, 2000);
+    });
+});
 
 
 

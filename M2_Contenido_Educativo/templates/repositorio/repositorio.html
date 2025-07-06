@@ -4,7 +4,7 @@
 
 <link rel="stylesheet" href="{% static 'repositorio/repositorio.css' %}">
 
-<h1>Repositorio</h1>
+<h1>Almacen de Repositorios</h1>
 
 <div class="search-container">
     <input type="text" placeholder="Buscar universidad..." />
@@ -75,28 +75,42 @@
                         {% endif %}
                     {% for examen in universidad.examenes.all %}
                         
+                        
                         <div class="examen-item" data-examen-id="{{ examen.id }}">
-                            <div class="examen-icon">📄</div>
+                            <div class="examen-icon">
+                                    {% if examen.miniatura %}
+                                        <img src="{{ examen.miniatura.url }}" alt="Miniatura" class="examen-thumbnail">
+                                    {% else %}
+                                        <div class="pdf-icon">📄</div>
+                                    {% endif %}
+                            </div>
                             <div class="examen-info">
                                 <h4>{{ examen.nombre }}</h4>
                                 <div class="fecha">{{ examen.fecha }}</div>
-                                <a href="{{ examen.archivo.url }}" download class="descargar-link">📥 Descargar</a>
-
-                                {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
-                                    <div class="examen-actions">
+                                <div class="examen-actions">
+                                    <a href="{{ examen.archivo.url }}" download class="descargar-link">📥 Descargar</a>
+                                    
+                                    
+                                    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
                                         <button type="button"
+                                                class="btn-editar"
                                                 data-universidad-id="{{ universidad.id }}"
                                                 data-examen-id="{{ examen.id }}"
                                                 data-nombre="{{ examen.nombre|escapejs }}"
                                                 data-fecha="{{ examen.fecha|date:'Y-m-d' }}"
                                                 onclick="editarExamenDesdeDataset(this)">
-                                            ✏️
+                                            <i> ✏️</i>
+                                            <span class="tooltip">Editar examen</span>
                                         </button>
-                                        <button type="button" class="btn-eliminar" onclick="confirmarEliminarExamen('{{ examen.id }}')">🗑️</button>
-                                    </div>
-                                {% endif %}
+                                        <button type="button" class="btn-eliminar" onclick="confirmarEliminarExamen('{{ examen.id }}')">🗑️ </button>
+                                    {% endif %}
+                                </div>
                             </div>
+                            
+                            
+                            
                         </div>
+
                     {% empty %}
                         <p class="no-examenes">No hay exámenes disponibles.</p>
                     {% endfor %}
@@ -106,19 +120,46 @@
 
                         <div class="repositorio-actions">
                             <a href="{% url 'editar_universidad' universidad.id %}" class="btn-editar-repositorio">✏️ Editar</a>
-                            <button type="button" class="btn-eliminar-repositorio" onclick="confirmarEliminarRepositorio('{{ universidad.id }}')">🗑️ Eliminar</button>
+                            <button type="button" class="btn-eliminar-repositorio" onclick="confirmarEliminarRepositorio('{{ universidad.id }}')">
+                                <span class="icono-eliminar">🗑️</span>
+                                <span>Eliminar</span>
+                            </button>
                         </div>
 
                         <div class="formulario-examen" id="formulario-examen-{{ universidad.id }}" style="display: none;">
                             <form method="POST" enctype="multipart/form-data" action="{% url 'add_examen' universidad.id %}" data-mode="crear">
                                 {% csrf_token %}
                                 <input type="hidden" name="examen_id" value="">
-                                <input type="text" name="nombre" placeholder="Nombre del examen" required autocomplete="off">
-                                <input type="date" name="fecha" required>
-                                <input type="file" name="archivo" accept=".pdf">
-                                <button type="submit" class="btn-submit">Subir</button>
+                                
+                                <div class="form-group">
+                                    <label for="nombre-{{ universidad.id }}">Nombre del examen</label>
+                                    <input type="text" id="nombre-{{ universidad.id }}" name="nombre" 
+                                        placeholder="Ej: Examen de Admisión 2023" required autocomplete="off">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="fecha-{{ universidad.id }}">Fecha del examen</label>
+                                    <input type="date" id="fecha-{{ universidad.id }}" name="fecha" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="archivo-{{ universidad.id }}">Archivo PDF</label>
+                                    <input type="file" id="archivo-{{ universidad.id }}" name="archivo" accept=".pdf">
+                                    <small class="file-hint">Solo se aceptan archivos PDF (máx. 10MB)</small>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="button" class="btn-cancel" onclick="mostrarFormulario('{{ universidad.id }}')">
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" class="btn-submit">
+                                        <span class="submit-text">Subir examen</span>
+                                        <span class="loading-spinner" style="display: none;">⏳</span>
+                                    </button>
+                                </div>
                             </form>
                         </div>
+                        
                         <div id="modal-contenedor" class="modal" style="display: none;"></div>
                     {% endif %}
                 </div>

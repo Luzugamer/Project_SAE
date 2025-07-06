@@ -2,31 +2,58 @@
 {% load static %}
 
 {% block title %}
-    {% if form.instance.pk %}Editar Universidad{% else %}Agregar Universidad{% endif %}
+    {% if form.instance.pk %}Editar Repositorio{% else %}Registrar Repositorio Académico{% endif %}
 {% endblock %}
 
 {% block content %}
+<!-- CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/css/bootstrap-select.min.css">
 <link rel="stylesheet" href="{% static 'repositorio/add_universidad.css' %}">
 
-<div class="form-container">
-    <h1>{% if form.instance.pk %}Editar Universidad{% else %}Agregar Universidad{% endif %}</h1>
+<!-- Contenedor del formulario -->
+<div class="form-container" {% if form.instance.pk %}data-edit="true"{% endif %}>
+    <h1>{% if form.instance.pk %}Editar Repositorio{% else %}Registrar Repositorio Académico{% endif %}</h1>
 
-    <form method="POST" enctype="multipart/form-data" class="formulario-universidad">
+    <form id="form-universidad" method="POST" enctype="multipart/form-data" class="formulario-universidad">
         {% csrf_token %}
 
         <div class="form-field">
-            <label for="{{ form.nombre.id_for_label }}">Nombre:</label>
+            <label for="{{ form.nombre.id_for_label }}">Nombre de universidad:</label>
             {{ form.nombre }}
         </div>
 
-        <div class="form-field">
+        <div class="form-field select-container">
             <label for="{{ form.pais.id_for_label }}">País:</label>
             {{ form.pais }}
         </div>
 
-        <div class="form-field">
+        <div class="form-field file-upload-container">
             <label for="{{ form.logo.id_for_label }}">Logo:</label>
-            {{ form.logo }}
+            <div class="custom-file-input-wrapper">
+                <div class="custom-file-input">
+                    {{ form.logo }}
+                    <div class="file-label">
+                        <span class="file-text">Seleccionar archivo</span>
+                        <span class="icon">📁</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="logo-preview">
+                {% if form.instance.logo %}
+                    <div class="fade-in-image">
+                        <img src="{{ form.instance.logo.url }}" alt="Logo Preview" />
+                        <div class="mini-thumb">Miniatura seleccionada</div>
+                    </div>
+                {% elif form.logo.value %}
+                    <div class="fade-in-image">
+                        <img src="{{ form.logo.value.url }}" alt="Logo Preview" />
+                        <div class="mini-thumb">Miniatura seleccionada</div>
+                    </div>
+                {% else %}
+                    <p>No hay archivo seleccionado</p>
+                {% endif %}
+            </div>
         </div>
 
         <div class="form-field">
@@ -39,8 +66,49 @@
             {{ form.tipo_solucionario }}
         </div>
 
-        <button type="submit" class="btn-submit">Guardar</button>
-        <a href="{% url 'repositorio' %}" class="btn-cancel">Cancelar</a>
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">Guardar</button>
+            <a href="{% url 'repositorio' %}" class="btn-cancel">Cancelar</a>
+        </div>
     </form>
 </div>
+
+<!-- Modal de previsualización -->
+<div id="modal-previa" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="cerrarModalPrevia()">✖</span>
+        <div id="tarjeta-previa" class="tarjeta">
+            <div class="tarjeta-header">
+                <img id="previa-logo" src="" alt="Logo Universidad" />
+                <div class="universidad-info">
+                    <h3 id="previa-nombre">Nombre</h3>
+                    <div class="detalle-universidad">
+                        <span class="pais" id="previa-pais">País</span>
+                        <span class="especialidad" id="previa-especialidad">Especialidad</span>
+                        <span class="tipo-solucionario" id="previa-tipo">Tipo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button id="btn-editar" type="button" class="btn-submit">Seguir editando</button>
+            <button id="btn-guardar" type="button" class="btn-submit">Guardar y ver en Repositorio</button>
+            <button id="btn-agregar-otra" type="button" class="btn-submit">Guardar y agregar otra</button>
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/js/bootstrap-select.min.js"></script>
+<script>
+    const URLS = {
+        repositorio: "{% url 'repositorio' %}",
+        add_universidad: "{% url 'add_universidad' %}"
+    };
+</script>
+<script src="{% static 'repositorio/add_universidad.js' %}"></script>
 {% endblock %}
