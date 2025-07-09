@@ -1,0 +1,670 @@
+/* Estilos base del contenedor principal */
+.main-container {
+    min-height: 100vh;
+    width: 100vw;
+    background: linear-gradient(135deg, #dbfaf4 0%, #91f5d6 50%, #43e1a3 100%);
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+    padding-top: 60px;
+}
+
+.cards-section {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.section-title {
+    text-align: center;
+    font-size: clamp(1.8rem, 4vw, 2.2rem);
+    font-weight: 700;
+    color: #262145;
+    margin: 0 0 2rem 0;
+    text-shadow: 0 2px 4px rgba(38, 33, 69, 0.1);
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    white-space: nowrap;
+}
+
+.carousel-wrapper {
+    position: relative;
+    margin: 0 auto;
+    top: auto;
+    left: auto;
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    perspective: 1500px;
+    width: fit-content;
+    z-index: 10;
+}
+
+.carousel {
+    position: relative;
+    width: clamp(240px, 50vw, 280px);
+    height: clamp(160px, 25vh, 180px);
+}
+
+.cards-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: none;
+}
+
+.card {
+    position: absolute;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem 1rem;
+    width: clamp(240px, 50vw, 280px);
+    height: clamp(160px, 25vh, 180px);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.8s ease;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    left: 50%;
+    top: 50%;
+    margin-left: clamp(-140px, -25vw, -140px);
+    margin-top: clamp(-80px, -12.5vh, -90px);
+    transform-origin: center center;
+    backface-visibility: hidden;
+    box-sizing: border-box;
+}
+
+.card-icon {
+    margin-bottom: 0.5rem;
+}
+
+.icon {
+    width: clamp(50px, 12vw, 65px);
+    height: clamp(50px, 12vw, 65px);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    color: white;
+    margin: 0 auto;
+    transition: all 0.4s ease;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    transform-origin: center center;
+}
+
+/* Colores específicos para iconos */
+.physics-icon { background: linear-gradient(135deg, #43e1a3, #15e48b); }
+.geometry-icon { background: linear-gradient(135deg, #15e48b, #07f26f); }
+.algebra-icon { background: linear-gradient(135deg, #86d4ba, #43e1a3); }
+.chemistry-icon { background: linear-gradient(135deg, #04dc46, #07f26f); }
+.biology-icon { background: linear-gradient(135deg, #408270, #86d4ba); }
+.history-icon { background: linear-gradient(135deg, #a494b0, #86d4ba); }
+.literature-icon { background: linear-gradient(135deg, #91f5d6, #dbfaf4); color: #262145; }
+.geography-icon { background: linear-gradient(135deg, #43e1a3, #91f5d6); }
+
+.card-title {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-weight: 600;
+    color: #262145;
+    margin: 0.3rem 0;
+    transition: all 0.3s ease;
+    line-height: 1.2;
+}
+
+.card-subtitle {
+    font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+    color: #408270;
+    font-weight: 500;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    line-height: 1.2;
+}
+
+/* Efectos de sombra y brillo */
+.card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 20px;
+    background: radial-gradient(ellipse at center, rgba(38, 33, 69, 0.2) 0%, transparent 70%);
+    filter: blur(8px);
+    z-index: -1;
+    opacity: 0.7;
+    transition: all 0.6s ease;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(67, 225, 163, 0.1), rgba(145, 245, 214, 0.1));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    border-radius: 24px;
+}
+
+/* Estados del carrusel - Solo estilos visuales */
+.card.active {
+    z-index: 3;
+    opacity: 1;
+    filter: none;
+}
+
+.card.side {
+    opacity: 0.7;
+    z-index: 2;
+    filter: blur(1px);
+}
+
+.card.back {
+    opacity: 0.4;
+    z-index: 1;
+    filter: blur(2px);
+}
+
+/* Efectos hover - Solo estilos */
+.card:hover::before {
+    opacity: 1;
+}
+
+.card:hover::after {
+    opacity: 0.9;
+}
+
+.card:hover {
+    background-color: #f8f8f8;
+}
+
+.card.active:hover {
+    box-shadow: 
+        0 40px 80px rgba(38, 33, 69, 0.3),
+        0 20px 40px rgba(67, 225, 163, 0.2);
+}
+
+/* Botones de navegación - Solo estilos */
+.nav-button {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(219, 250, 244, 0.9));
+    border: none;
+    border-radius: 50%;
+    width: clamp(45px, 8vw, 55px);
+    height: clamp(45px, 8vw, 55px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(15px);
+    z-index: 30;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transform-origin: center center;
+}
+
+.nav-button:hover {
+    background: linear-gradient(135deg, #43e1a3, #15e48b);
+    box-shadow: 
+        0 15px 35px rgba(38, 33, 69, 0.2),
+        0 8px 20px rgba(67, 225, 163, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-button.left {
+    left: clamp(-400px, -30vw, -220px);
+}
+
+.nav-button.right {
+    right: clamp(-400px, -30vw, -220px);
+}
+
+.nav-button:hover .arrow-icon {
+    color: white;
+}
+
+.arrow-icon {
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    color: #43e1a3;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.nav-button.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Animaciones CSS - Solo definiciones */
+@keyframes float {
+    0%, 100% { 
+        transform: translateY(0px); 
+    }
+    50% { 
+        transform: translateY(-10px); 
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    50% {
+        box-shadow: 0 8px 30px rgba(67, 225, 163, 0.4);
+    }
+}
+
+/* Clases para animaciones que serán aplicadas por JavaScript */
+.floating {
+    animation: float 3s ease-in-out infinite;
+}
+
+.pulsing {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.glowing {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .section-title {
+        top: 15%;
+        font-size: clamp(1.5rem, 5vw, 2rem);
+    }
+    
+    .nav-button.left {
+        left: clamp(-60px, -12vw, -80px);
+    }
+    
+    .nav-button.right {
+        right: clamp(-60px, -12vw, -80px);
+    }
+}
+
+@media (max-width: 480px) {
+    .section-title {
+        top: 10%;
+        font-size: clamp(1.3rem, 6vw, 1.8rem);
+    }
+    
+    .nav-button.left {
+        left: clamp(-50px, -10vw, -60px);
+    }
+    
+    .nav-button.right {
+        right: clamp(-50px, -10vw, -60px);
+    }
+}
+
+/* Estilos adicionales para asegurar el centrado perfecto */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.course-description {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.temas-lista {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+.temas-lista li {
+    background-color: #ffffffcc;
+    margin: 10px auto;
+    padding: 10px;
+    width: fit-content;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.volver-link {
+    display: block;
+    margin-top: 30px;
+    text-align: center;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+/* Barra blanca de la cantidad de examenes disponibles*/
+/* Posicionamiento del recuadro */
+
+.contenedor-examenes {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 60vh;
+    padding-top: 40px;
+    box-sizing: border-box;
+}
+
+/* Caja blanca */
+.examenes-box {
+    background-color: #ffffff;
+    padding: 25px 40px;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 60%;
+    max-width: 600px;
+}
+
+/* Texto si hay exámenes */
+.numero-examenes {
+    font-size: 1.2rem;
+    color: #222;
+    margin-top: 15px;
+}
+
+/* Barra si no hay exámenes */
+.barra-alerta {
+    background-color: #ffe4e4;
+    color: #c0392b;
+    padding: 12px 20px;
+    margin-top: 15px;
+    border-radius: 10px;
+    font-weight: 600;
+    display: inline-block; 
+}
+
+.detalle-container {
+    position: relative; /* quita el fixed global */
+    height: auto; /* permite crecer según contenido */
+    min-height: 100vh;
+    overflow: visible; /* muestra contenido completo */
+    align-items: flex-start; /* alinea arriba */
+    padding-top: 80px; /* espacio superior */
+}
+
+/* Indice de las lecciones */
+.index-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #43e1a3;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 9999;
+    font-weight: bold;
+}
+
+.sidebar-index {
+    position: fixed;
+    top: 0;
+    left: -250px; /* oculto inicialmente */
+    width: 250px;
+    height: 100%;
+    background: white;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    padding: 20px;
+    box-sizing: border-box;
+    transition: left 0.3s ease;
+    z-index: 9998;
+}
+
+.sidebar-index h3 {
+    margin-top: 0;
+}
+
+.sidebar-index ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-index li {
+    margin: 10px 0;
+}
+
+.sidebar-index li a {
+    text-decoration: none;
+    color: #43e1a3;
+    font-weight: 500;
+}
+
+.sidebar-index li a:hover {
+    text-decoration: underline;
+}
+
+.sidebar-lecciones {
+    position: fixed;
+    top: 60px; /* debajo de la navbar si existe */
+    left: 0;
+    width: 250px;
+    height: calc(100% - 60px);
+    background-color: white;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+    z-index: 9999;
+    overflow-y: auto;
+}
+
+.sidebar-lecciones.active {
+    transform: translateX(0);
+}
+
+.sidebar-lecciones ul {
+    list-style: none;
+    padding: 20px;
+}
+
+.sidebar-lecciones li {
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+}
+
+/* Efecto al pasar el mouse por las lecciones */
+.leccion-item {
+  cursor: pointer;
+  padding: 10px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.leccion-item:hover {
+  background-color: #43e1a3; 
+  color: white;
+  border-radius: 5px;
+}
+
+/*Camino de lecciones*/
+.camino-container {
+  margin-top: 5px;
+  text-align: center;
+}
+
+.camino-container h3 {
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+  color: #43e1a3;
+}
+
+.camino {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  position: relative;
+  padding: 20px 0;
+}
+
+.nodo-leccion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.circulo {
+  width: 60px;
+  height: 60px;
+  background-color: #43e1a3;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.circulo:hover {
+  transform: scale(1.1);
+}
+
+.titulo-leccion {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Línea conectora */
+.flecha {
+  margin: 0 10px;
+  font-size: 1.5rem;
+  color: #43e1a3;
+  animation: flechaMove 1s infinite;
+}
+
+@keyframes flechaMove {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.cuadro-leccion {
+  width: 120px;
+  min-height: 80px;
+  background: linear-gradient(135deg, #43e1a3, #15e48b); /* colores estilo Duolingo */
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.cuadro-leccion:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #15e48b, #43e1a3);
+}
+
+.cuadro-leccion-con-flecha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flecha {
+  font-size: 1.5rem;
+  color: #43e1a3;
+  animation: flechaMove 1s infinite;
+}
+
+@keyframes flechaMove {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.color-1 {
+  background: linear-gradient(135deg, #533aad, #315ef1);
+}
+
+.color-2 {
+  background: linear-gradient(135deg, #fa54e4, #e94173);
+}
+
+.color-3 {
+  background: linear-gradient(135deg, #86d4ba, #caff4dfb);
+}
+
+.color-4 {
+  background: linear-gradient(135deg, #ddff1c, #07f26f);
+}
+
+.color-5 {
+  background: linear-gradient(135deg, #408270, #86d4ba);
+}
+
+.color-6 {
+  background: linear-gradient(135deg, #a494b0, #86d4ba);
+}
+
+.color-7 {
+  background: linear-gradient(135deg, #91f5d6, #dbfaf4);
+}

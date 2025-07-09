@@ -1,0 +1,767 @@
+/* repositorio.css */
+
+:root {
+    --primary-green: #7ED4AD;
+    --dark-purple: #2D1B69;
+    --light-gray: #F5F5F5;
+    --white: #FFFFFF;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.15);
+    --border-radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-green) 0%, #8FE1C7 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    padding-bottom: 120px;
+}
+
+h1 {
+    color: var(--dark-purple);
+    font-weight: 700;
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 0 2px 4px rgba(45, 27, 105, 0.1);
+}
+
+/* ===== SEARCH SECTION ===== */
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.search-container input[type="text"] {
+    width: 100%;
+    max-width: 600px;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 50px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    font-size: 1rem;
+    color: #666;
+    outline: none;
+    transition: var(--transition);
+}
+
+.search-container input[type="text"]:focus {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+}
+
+.search-container input[type="text"]::placeholder {
+    color: #aaa;
+    font-weight: 400;
+}
+
+/* ===== GRID LAYOUT ===== */
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ===== CARD COMPONENTS ===== */
+.tarjeta {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+
+.tarjeta:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* ===== CARD HEADER ===== */
+.tarjeta-header {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+
+.tarjeta-header img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tarjeta .examenes-container {
+    transition: max-height 0.4s ease-in-out;
+    overflow: hidden;
+    opacity: 1;
+}
+
+.tarjeta.collapsing .examenes-container {
+    opacity: 0;
+}
+
+.universidad-info h3 {
+    color: var(--dark-purple);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.universidad-info .pais {
+    color: #666;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.detalle-universidad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.detalle-universidad span {
+    color: #666;
+    font-weight: 400;
+    position: relative;
+}
+
+.detalle-universidad span:not(:first-child)::before {
+    content: "•";
+    margin: 0 6px;
+    color: #999;
+}
+
+
+/* ===== EXPAND INDICATOR ===== */
+.expand-indicator {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.expand-indicator::before {
+    content: '+';
+    color: var(--white);
+    font-weight: bold;
+    font-size: 16px;
+    transition: var(--transition);
+}
+
+.tarjeta.expanded .expand-indicator {
+    background: var(--dark-purple);
+    transform: rotate(45deg);
+}
+
+/* ===== EXPANDABLE CONTENT ===== */
+.examenes-container {
+    /* La transición y max-height se manejan en JS para mayor control */
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.examenes-list {
+    padding: 20px 24px;
+}
+
+/* ===== EXAM ITEMS ===== */
+.examen-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--white);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: var(--transition);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.examen-item:hover {
+    background: #f8f9ff;
+    transform: translateX(4px);
+}
+
+.examen-item.agregar-examen {
+    border: 1px dashed var(--primary-green);
+    background: #f9fffe;
+}
+
+.examen-item.agregar-examen:hover {
+    background: #f0fff8;
+    border-color: var(--dark-purple);
+}
+
+.examen-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-green);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--white);
+    flex-shrink: 0;
+}
+
+.examen-info h4 {
+    color: var(--dark-purple);
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.examen-info .fecha {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.descargar-link {
+    color: var(--primary-green);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.descargar-link:hover {
+    color: var(--dark-purple);
+}
+
+/* ===== FORM STYLES ===== */
+.formulario-examen {
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 0 0 16px 16px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top;
+}
+
+.formulario-examen input[type="text"],
+.formulario-examen input[type="date"],
+.formulario-examen input[type="file"] {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 0.95rem;
+    width: 100%;
+    transition: border-color 0.2s ease;
+}
+
+.formulario-examen input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+}
+
+.formulario-examen .btn-submit {
+    padding: 10px 16px;
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.formulario-examen .btn-submit:hover {
+    background: #6bc599;
+}
+
+.formulario-examen.ocultando {
+    opacity: 0;
+    transform: scaleY(0.9);
+    pointer-events: none;
+}
+
+/* ===== LOADING AND EMPTY STATES ===== */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.loading::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-top: 2px solid var(--primary-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.no-examenes {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-style: italic;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.docente-actions {
+    padding: 16px 24px;
+    border-top: 1px solid #f0f0f0;
+    background: var(--white);
+    display: flex;
+    gap: 12px;
+}
+
+.btn-action {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-upload {
+    background: var(--primary-green);
+    color: var(--white);
+}
+
+.btn-upload:hover {
+    background: #6BC599;
+    transform: translateY(-1px);
+}
+
+.btn-edit {
+    background: #f0f0f0;
+    color: var(--dark-purple);
+}
+
+.btn-edit:hover {
+    background: #e0e0e0;
+}
+
+/* ===== ADD CARD ===== */
+.tarjeta-agregar {
+    background: var(--white);
+    border: 2px dashed var(--dark-purple);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    cursor: pointer;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 180px;
+}
+
+.tarjeta-agregar:hover {
+    background: #f9f9f9;
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.tarjeta-agregar .icono-mas {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--dark-purple);
+    margin-bottom: 12px;
+}
+
+.tarjeta-agregar .agregar-texto {
+    font-size: 1rem;
+    color: #444;
+    font-weight: 500;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    body {
+        padding: 16px;
+        padding-bottom: 120px;
+    }
+
+    h1 {
+        font-size: 2rem;
+        margin-bottom: 24px;
+    }
+
+    .tarjetas {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .tarjeta-header {
+        padding: 20px;
+    }
+
+    .search-container input[type="text"] {
+        padding: 14px 20px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tarjeta-header {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .tarjeta-header img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .universidad-info h3 {
+        font-size: 1.1rem;
+    }
+
+    .examenes-list {
+        padding: 16px 20px;
+    }
+
+    .formulario-examen {
+        padding: 12px 20px;
+    }
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+
+.formulario-examen {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.formulario-examen input[type="text"],
+.formulario-examen input[type="date"],
+.formulario-examen input[type="file"] {
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    width: 100%;
+    transition: border 0.3s ease;
+}
+
+.formulario-examen input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+}
+
+.formulario-examen .btn-submit {
+    background: var(--primary-green);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    align-self: flex-end;
+}
+
+.formulario-examen .btn-submit:hover {
+    background: #6bc599;
+}
+
+.examen-actions button,
+.repositorio-actions button {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    margin-left: 6px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.examen-actions button:hover,
+.repositorio-actions button:hover {
+    transform: scale(1.2);
+}
+
+.btn-eliminar {
+    color: #f44336;
+}
+
+.btn-editar {
+    color: #2D1B69;
+}
+
+.examen-actions {
+    margin-top: 6px;
+    display: flex;
+    gap: 8px;
+}
+
+.btn-editar, .btn-eliminar {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    position: relative;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content p {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.modal-actions .btn-submit {
+    background-color: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.modal-actions .btn-submit:hover {
+    background-color: #6BC599;
+}
+
+.modal-actions .btn-cancel {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.modal-actions .btn-cancel:hover {
+    background-color: #d32f2f;
+}
+
+.filtro-opciones {
+    margin-top: 12px;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+#toggle-opciones {
+    background-color: var(--primary-green);
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.contenedor-filtros {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.filtro-item label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.select-filtro {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.search-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1.5rem 0;
+    gap: 10px;
+    position: relative;
+}
+
+.search-container input[type="text"] {
+    padding: 10px 16px;
+    width: 100%;
+    max-width: 500px;
+    border: 2px solid #ccc;
+    border-radius: 50px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-filtro-circular {
+    padding: 8px 14px;
+    font-size: 0.95rem;
+    background-color: var(--primary-green, #4CAF50);
+    color: white;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start;
+    margin-top: 8px;
+    margin-left: 12px;
+}
+
+.btn-filtro-circular:hover {
+    background-color: #6bc599;
+}
+
+#contenedor-filtros {
+    display: none;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 10px;
+    gap: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+#contenedor-filtros.show {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.filtro-item {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+.select-filtro {
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    background-color: white;
+    margin-bottom: 4px;
+}
+
+.filtro-item span {
+    font-size: 0.9rem;
+    color: #555;
+}
+/* Animación de aparición suave */
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Botón con transición de color y rotación de ícono opcional */
+.btn-filtro-circular {
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.btn-filtro-circular:active {
+    transform: scale(0.95);
+}
+
+.btn-filtro-circular.open {
+    background-color: #379e72;
+}

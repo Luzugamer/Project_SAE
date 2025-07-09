@@ -1,0 +1,72 @@
+{% extends "Paginas_Inicio/base.html" %}
+{% load static %}
+
+{% block title %}{{ curso.nombre }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{% static 'Paginas_Inicio/Pag_principal/principal.css' %}">
+
+<!-- Botón para abrir/cerrar el índice de lecciones -->
+<button id="btnLecciones" class="index-toggle">
+  ☰ Lecciones
+</button>
+
+<div id="sidebarLecciones" class="sidebar-lecciones">
+  <ul>
+    {% for leccion in lecciones %}
+      <li class="leccion-item" 
+          data-titulo="{{ leccion.titulo }}" 
+          data-descripcion="{{ leccion.descripcion }}">
+        {{ leccion.titulo }}
+      </li>
+    {% empty %}
+      <li>No hay lecciones disponibles</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div id="leccionModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3 id="modalTitulo"></h3>
+    <p id="modalDescripcion"></p>
+    <button id="iniciarLeccionBtn">Iniciar Lección</button>
+    <button id="recordarBtn">Recordármelo más tarde</button>
+  </div>
+</div>
+
+  <div class="contenedor-examenes">
+    <div class="examenes-box">
+      <h2>Exámenes Disponibles</h2>
+
+      {% if examenes %}
+        <p class="numero-examenes">Número de exámenes disponibles: {{ examenes|length }}</p>
+      {% else %}
+        <div class="barra-alerta">
+          No hay exámenes disponibles
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+<div class="camino-container">
+  <h3>Progreso del Curso</h3>
+  <div class="camino">
+    {% for leccion in lecciones %}
+      <div class="nodo-leccion-con-flecha">
+        <div class="cuadro-leccion-con-flecha">
+          <div class="cuadro-leccion color-{{forloop.counter}} leccion-item"
+               data-titulo="{{ leccion.titulo }}"
+               data-descripcion="{{ leccion.descripcion }}">
+            <p class="titulo-leccion">{{ leccion.titulo }}</p>
+          </div>
+          {% if not forloop.last %}
+            <div class="flecha">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
