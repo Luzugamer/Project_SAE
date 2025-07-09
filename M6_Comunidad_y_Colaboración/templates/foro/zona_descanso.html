@@ -1,2 +1,121 @@
-<h1>Zona de Descanso</h1>
-<p>Bienvenido a tu zona social. Aquí puedes compartir ideas, descansar y conversar libremente.</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zona de Descanso | Comunidad y Colaboración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: #E0F7FA;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            background: #ffffffcc;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            animation: fadeIn 1.5s ease;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #0277BD;
+        }
+
+        p.subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .tip-card {
+            background: #B3E5FC;
+            border-radius: 15px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tip-card:hover {
+            transform: scale(1.05);
+        }
+
+        .tip-title {
+            font-weight: bold;
+            color: #01579B;
+            margin-bottom: 10px;
+        }
+
+        .volver-btn {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 25px;
+            background-color: #0288D1;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .volver-btn:hover {
+            background-color: #0277BD;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Zona de Descanso 🧘‍♀️</h1>
+        <p class="subtitle">Un espacio ligero para despejar tu mente y recargar energías.</p>
+
+        <div class="tips-grid">
+            <div class="tip-card">
+                <div class="tip-title">🎧 Escucha música lo-fi</div>
+                <p>Relájate mientras estudias o tomas un descanso con música suave y ambiental.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-title">🌿 Respiración consciente</div>
+                <p>Inhala 4 segundos, retén 4, exhala 4. Repite durante 2 minutos para reducir el estrés.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-title">📖 Lectura ligera</div>
+                <p>Lee un poema, una frase motivadora o un breve cuento para inspirarte.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-title">☕ Pausa activa</div>
+                <p>Levántate, estira tus brazos, camina unos minutos y vuelve con más energía.</p>
+            </div>
+        </div>
+
+        <a href="{% url 'mis_comunidades' %}" class="volver-btn">← Volver a Mis Comunidades</a>
+
+        <footer>
+            Siempre aprendiendo juntos 💙
+        </footer>
+    </div>
+</body>
+</html>

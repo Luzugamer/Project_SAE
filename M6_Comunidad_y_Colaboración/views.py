@@ -7,6 +7,10 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.utils.decorators import method_decorator
+from django.views.generic import View
+from django.contrib.sessions.models import Session
+from django.utils import timezone
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -21,6 +25,14 @@ from django.core.paginator import Paginator
 from .models import Comunidad, Mensaje, MiembroComunidad, Invitacion, Reporte, Perfil
 from django.contrib.auth.models import User
 import json
+
+from .models import Conversacion, Mensaje, ProblemaMatematico
+from .forms import PreguntaForm
+from .services.ai_service import AIService
+from .services.math_solver import MathSolver
+
+import openai
+
 
 from .models import (
     Comunidad, MiembroComunidad, Mensaje, MensajePrivado, Invitacion, Perfil,
@@ -288,23 +300,6 @@ def reportar_comunidad(request, comunidad_id):
         return redirect('zona_descanso', comunidad_id=comunidad_id)
     
     return render(request, "foro/reportar.html", {'comunidad': comunidad})
-
-@login_required
-def asistente_ia(request):
-    if request.method == 'POST':
-        pregunta = request.POST.get('pregunta', '').strip()
-        try:
-            response = requests.post(
-                "http://localhost:8001/api/responder",
-                json={"pregunta": pregunta},
-                timeout=10
-            )
-            respuesta = response.json().get("respuesta", "No se recibió respuesta.")
-        except Exception as e:
-            respuesta = "Ocurrió un error al conectar con la API externa."
-
-        return JsonResponse({'respuesta': respuesta})
-    return render(request, "foro/asistente_ia.html")
 
 @login_required
 def principio(request):
@@ -1036,3 +1031,175 @@ def procesar_codigo_pendiente(request):
         codigo = request.session.pop('codigo_invitacion_pendiente')
         return redirect('unirse_comunidad', codigo_invitacion=codigo)
     return redirect('lista_comunidades')
+
+
+
+class AsistenteIAView(View):
+    def get(self, request):
+        """
+        Página del asistente de IA
+        """
+        # Crear o recuperar conversación
+        session_id = request.session.get('conversacion_id')
+        if not session_id:
+            session_id = str(uuid.uuid4())
+            request.session['conversacion_id'] = session_id
+        
+        conversacion, created = Conversacion.objects.get_or_create(
+            session_id=session_id,
+            defaults={
+                'usuario': request.user if request.user.is_authenticated else None,
+                'activa': True
+            }
+        )
+        
+        # Obtener mensajes previos
+        mensajes = conversacion.mensajes.all()
+        
+        # Formulario
+        form = PreguntaForm()
+        
+        context = {
+            'form': form,
+            'mensajes': mensajes,
+            'conversacion_id': session_id
+        }
+
+        return render(request, 'foro/asistente_ia.html', context)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProcesarPreguntaView(View):
+    def post(self, request):
+        """
+        Procesa la pregunta del usuario y genera respuesta de IA
+        """
+        try:
+            data = json.loads(request.body)
+            pregunta = data.get('pregunta', '').strip()
+            session_id = data.get('session_id')
+            
+            if not pregunta or not session_id:
+                return JsonResponse({
+                    'error': 'Pregunta y session_id son requeridos'
+                }, status=400)
+            
+            # Obtener conversación
+            try:
+                conversacion = Conversacion.objects.get(session_id=session_id)
+            except Conversacion.DoesNotExist:
+                return JsonResponse({
+                    'error': 'Conversación no encontrada'
+                }, status=404)
+            
+            # Crear mensaje del usuario
+            mensaje_usuario = Mensaje.objects.create(
+                conversacion=conversacion,
+                tipo='usuario',
+                contenido=pregunta
+            )
+            
+            # Analizar problema matemático
+            math_solver = MathSolver()
+            analisis = math_solver.analizar_problema(pregunta)
+            
+            # Crear registro del problema
+            ProblemaMatematico.objects.create(
+                mensaje=mensaje_usuario,
+                nivel=analisis['nivel'],
+                categoria=analisis['categoria'],
+                dificultad=analisis['dificultad']
+            )
+            
+            # Obtener contexto de conversación
+            mensajes_previos = list(conversacion.mensajes.values(
+                'tipo', 'contenido'
+            ).order_by('timestamp'))
+            
+            # Generar respuesta con IA
+            ai_service = AIService()
+            resultado = ai_service.generar_respuesta(pregunta, mensajes_previos[:-1])
+            
+            # Crear mensaje de respuesta
+            mensaje_ia = Mensaje.objects.create(
+                conversacion=conversacion,
+                tipo='ia',
+                contenido=resultado['respuesta'],
+                tokens_utilizados=resultado['tokens_utilizados'],
+                tiempo_respuesta=resultado['tiempo_respuesta']
+            )
+            
+            # Marcar problema como resuelto si fue exitoso
+            if resultado['exito']:
+                problema = ProblemaMatematico.objects.get(mensaje=mensaje_usuario)
+                problema.resuelto = True
+                problema.save()
+            
+            return JsonResponse({
+                'respuesta': resultado['respuesta'],
+                'mensaje_id': mensaje_ia.id,
+                'tokens_utilizados': resultado['tokens_utilizados'],
+                'tiempo_respuesta': resultado['tiempo_respuesta'],
+                'categoria': analisis['categoria'],
+                'nivel': analisis['nivel'],
+                'dificultad': analisis['dificultad']
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'error': f'Error interno: {str(e)}'
+            }, status=500)
+
+class HistorialView(View):
+    def get(self, request):
+        """
+        Obtiene el historial de conversación
+        """
+        session_id = request.session.get('conversacion_id')
+        if not session_id:
+            return JsonResponse({'mensajes': []})
+        
+        try:
+            conversacion = Conversacion.objects.get(session_id=session_id)
+            mensajes = conversacion.mensajes.select_related().order_by('timestamp')
+            
+            mensajes_data = []
+            for msg in mensajes:
+                mensaje_data = {
+                    'id': msg.id,
+                    'tipo': msg.tipo,
+                    'contenido': msg.contenido,
+                    'timestamp': msg.timestamp.isoformat(),
+                }
+                
+                # Agregar datos del problema si es mensaje de usuario
+                if msg.tipo == 'usuario' and hasattr(msg, 'problemamatemático'):
+                    problema = msg.problemamatemático
+                    mensaje_data['problema'] = {
+                        'categoria': problema.categoria,
+                        'nivel': problema.nivel,
+                        'dificultad': problema.dificultad,
+                        'resuelto': problema.resuelto
+                    }
+                
+                mensajes_data.append(mensaje_data)
+            
+            return JsonResponse({'mensajes': mensajes_data})
+            
+        except Conversacion.DoesNotExist:
+            return JsonResponse({'mensajes': []})
+
+class LimpiarConversacionView(View):
+    def post(self, request):
+        """
+        Limpia la conversación actual
+        """
+        session_id = request.session.get('conversacion_id')
+        if session_id:
+            try:
+                conversacion = Conversacion.objects.get(session_id=session_id)
+                conversacion.mensajes.all().delete()
+                return JsonResponse({'exito': True})
+            except Conversacion.DoesNotExist:
+                pass
+        
+        return JsonResponse({'exito': False})

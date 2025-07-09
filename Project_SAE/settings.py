@@ -2,7 +2,12 @@ from pathlib import Path
 import os
 import dj_database_url
 from decouple import config
+# Variables de entorno para API keys
+from dotenv import load_dotenv
+load_dotenv()
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# O usa otra API como Anthropic, Gemini, etc.
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,9 +36,8 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
     
-    'bootstrap5'
+    'django_bootstrap5'
 
-    
 ]
 
 MIDDLEWARE = [

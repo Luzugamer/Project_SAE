@@ -25,7 +25,16 @@ TIPO_MENSAJE = (
     ('privado', 'Privado'),
     ('sistema', 'Sistema'),
 )
+class Conversacion(models.Model):
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
+    session_id = models.CharField(max_length=100, unique=True)
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+    activa = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = 'conversaciones'
+        ordering = ['-fecha_creacion']
+        
 class Comunidad(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
@@ -91,25 +100,61 @@ class MiembroComunidad(models.Model):
         return self.usuario.get_full_name()
 
 class Mensaje(models.Model):
-    comunidad = models.ForeignKey(Comunidad, on_delete=models.CASCADE, related_name='mensajes')
-    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    TIPO_MENSAJE = (
+        ('publico', 'Publico'),
+        ('privado', 'Privado'),
+        ('sistema', 'Sistema'),
+        ('usuario', 'Usuario'),
+        ('ia', 'IA'),
+    )
+
+    comunidad = models.ForeignKey(
+        Comunidad,
+        on_delete=models.CASCADE,
+        related_name='mensajes',
+        null=True,
+        blank=True,
+    )
+    conversacion = models.ForeignKey(
+        Conversacion,
+        on_delete=models.CASCADE,
+        related_name='mensajes',
+        null=True,
+        blank=True,
+    )
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Usuario que envio el mensaje (si aplica)"
+    )
     contenido = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    tipo = models.CharField(max_length=10, choices=TIPO_MENSAJE)
     es_importante = models.BooleanField(default=False)
-    tipo = models.CharField(max_length=10, choices=TIPO_MENSAJE, default='publico')
     editado = models.BooleanField(default=False)
     fecha_edicion = models.DateTimeField(null=True, blank=True)
-    
+
+    # Solo para mensajes IA
+    tokens_utilizados = models.IntegerField(default=0, blank=True, null=True)
+    tiempo_respuesta = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'mensajes'
+        ordering = ['-timestamp']
+
     def es_vigente(self):
-        if self.fecha_expiracion:
-            return timezone.now() < self.fecha_expiracion
-        return True
+        return True  # Podrías añadir lógica con `fecha_expiracion` si deseas
 
     def __str__(self):
-        return f"{self.autor.username} en {self.comunidad.nombre}: {self.contenido[:50]}"    
-    
-    class Meta:
-        ordering = ['-timestamp']
+        if self.comunidad:
+            return f"[Comunidad] {self.autor.username if self.autor else 'IA'} en {self.comunidad.nombre}: {self.contenido[:50]}"
+        elif self.conversacion:
+            return f"[IA] {self.tipo.upper()} - {self.contenido[:50]}"
+        return f"[Mensaje] {self.contenido[:50]}"
+
+
 
 class MensajePrivado(models.Model):
     """Modelo para mensajes privados entre miembros de la comunidad"""
@@ -268,3 +313,27 @@ class Reporte(models.Model):
     def __str__(self):
         return f"Reporte de {self.reportado_por.username} sobre {self.comunidad.nombre}"
 
+class ProblemaMatematico(models.Model):
+    NIVELES = [
+        ('secundaria', '5to Secundaria'),
+        ('universitario', 'Universitario'),
+    ]
+    
+    CATEGORIAS = [
+        ('algebra', 'Algebra'),
+        ('calculo', 'Calculo'),
+        ('geometria', 'Geometria'),
+        ('estadistica', 'Estadistica'),
+        ('trigonometria', 'Trigonometria'),
+        ('ecuaciones', 'Ecuaciones'),
+        ('otro', 'Otro'),
+    ]
+    
+    mensaje = models.OneToOneField(Mensaje, on_delete=models.CASCADE)
+    nivel = models.CharField(max_length=20, choices=NIVELES)
+    categoria = models.CharField(max_length=20, choices=CATEGORIAS)
+    dificultad = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    resuelto = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'problemas_matematicos'

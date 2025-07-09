@@ -1,11 +1,16 @@
-user: george313c@gmail.com
 
-password: MapacheUltra123*
 
-Cuenta de servicio
+Si hay error en utf8 de caracteres invalidos forzarlo con:
+chcp 65001
 
-George123
-george123-892
-Administrador
+ejecutar: 
+pip install requests
+pip install python-decouple
+pip install sympy
+pip install --upgrade openai
 
-george123-892@m6comunidades.iam.gserviceaccount.com
+
+AÑADIR EN REQUERIMENTS.TXT:
+requests
+python-decouple
+sympy
