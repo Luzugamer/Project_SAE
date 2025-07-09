@@ -7,9 +7,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comunidades de Estudio</title>
-    {% include 'foro/estilosdos.html' %}
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/inicio/inicio.css' %}">
 </head>
 <body>
+    <!-- Partículas flotantes -->
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
     <!-- Botón toggle sidebar -->
     <button class="sidebar-toggle" onclick="toggleSidebar()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,20 +70,38 @@
             <p style="font-size: 1rem; color: #555;">Únete a comunidades de estudio, participa en discusiones y expande tu conocimiento</p>
         </div>
 
-            <!-- Navegación principal -->
-            <div class="nav-buttons">
-                {% if user.is_authenticated %}
-               <a href="{% url 'comunidad:mis_comunidades' %}" class="btn">
-                    Ver comunidades
-                </a>
-                <a href="{% url 'comunidad:buscar_comunidades' %}" class="btn">
-                    🔍 Buscar Comunidades
-                </a>
-                <a href="{% url 'comunidad:asistente_ia' %}" class="btn">
-                    🤖 Asistente IA
-                </a>
+        <!-- Navegación principal - Diferenciada por rol -->
+        <div class="nav-buttons">
+            {% if user.is_authenticated %}
+                <!-- Botones para profesores -->
+                {% if user.rol == 'profesor' %}
+                    <a href="{% url 'comunidad:crear_comunidad' %}" class="btn">
+                        ➕ Crear Comunidad
+                    </a>
+                    <a href="{% url 'comunidad:comunidad_gestion' %}" class="btn">
+                        👤 Mis Comunidades
+                    </a>
+                    <a href="{% url 'comunidad:buscar_comunidades' %}" class="btn">
+                        🔍 Buscar Comunidades
+                    </a>
+                {% else %}
+                    <!-- Botones para estudiantes -->
+                    <a href="{% url 'comunidad:mis_comunidades' %}" class="btn">
+                        👤 Ver Comunidades
+                    </a>
+                    <a href="{% url 'comunidad:buscar_comunidades' %}" class="btn">
+                        🔍 Buscar Comunidades
+                    </a>
+                    <a href="{% url 'comunidad:asistente_ia' %}" class="btn">
+                        🤖 Asistente IA
+                    </a>
                 {% endif %}
-            </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn">
+                    🔐 Iniciar Sesión
+                </a>
+            {% endif %}
+        </div>
 
         <!-- Sección de comunidades destacadas -->
         <div class="featured-section">
@@ -141,7 +171,7 @@
     </div>
 
     <!-- Modal de confirmación -->
-    <div class="modal" id="joinModal" style="display: none;">
+    <div class="modal" id="joinModal">
         <div class="modal-content">
             <h3 style="color: #2c3e50;">¿Seguro que quieres unirte a esta comunidad?</h3>
             <p id="modalCommunityName" style="font-weight: bold; color: #555; margin: 15px 0;"></p>
@@ -153,40 +183,6 @@
         </div>
     </div>
 
-    <script>
-        let comunidadIdSeleccionada = null;
-
-        function mostrarModal(nombre, id) {
-            comunidadIdSeleccionada = id;
-            document.getElementById('modalCommunityName').textContent = nombre;
-            document.getElementById('joinModal').style.display = 'block';
-        }
-
-        function cerrarModal() {
-            document.getElementById('joinModal').style.display = 'none';
-            comunidadIdSeleccionada = null;
-        }
-
-        function confirmarUnion() {
-            if (comunidadIdSeleccionada) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/comunidad/${comunidadIdSeleccionada}/unirse/`;
-
-                const csrfToken = '{{ csrf_token }}';  // Django renderiza esto
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'csrfmiddlewaretoken';
-                input.value = csrfToken;
-                form.appendChild(input);
-
-                document.body.appendChild(form);
-                form.submit();  // En la vista, se redirige a comunidad_detalle
-            }
-        }
-    </script>
-    
-
     <!-- Botón flotante Asistente IA -->
     <div class="floating-ai" 
         data-url="{% url 'comunidad:asistente_ia' %}"
@@ -196,60 +192,8 @@
         </svg>
     </div>
 
-    <script>
-        let currentCommunityId = null;
+    <script src="{% static 'M6_Comunidades/inicio/inicio.js' %}"></script>    
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
-        }
-
-        function mostrarModal(nombreComunidad, comunidadId) {
-            document.getElementById('modalCommunityName').textContent = nombreComunidad;
-            currentCommunityId = comunidadId;
-            document.getElementById('joinModal').style.display = 'block';
-        }
-
-        function cerrarModal() {
-            document.getElementById('joinModal').style.display = 'none';
-            currentCommunityId = null;
-        }
-
-        function confirmarUnion() {
-            if (currentCommunityId) {
-                window.location.href = `/comunidad/${currentCommunityId}/`;
-            }
-            cerrarModal();
-        }
-
-        // Cerrar modal al hacer clic fuera
-        window.onclick = function(event) {
-            const modal = document.getElementById('joinModal');
-            if (event.target === modal) {
-                cerrarModal();
-            }
-        }
-
-        // Cerrar sidebar al hacer clic fuera
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.sidebar-toggle');
-            
-            if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
-                sidebar.classList.remove('active');
-            }
-        });
-
-        // Animaciones al cargar
-        window.addEventListener('load', function() {
-            const cards = document.querySelectorAll('.comunidad-card');
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.animation = 'fadeInUp 0.6s ease forwards';
-                }, index * 100);
-            });
-        });
-    </script>
 </body>
 </html>
 {% endblock %}

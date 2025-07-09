@@ -26,6 +26,9 @@ INSTALLED_APPS = [
     'M1_Gestion_de_Usuarios.apps.M1GestionDeUsuariosConfig',
     'Paginas_Inicio',
     'M2_Contenido_Educativo',
+    'M3_ESCANER_REPOSITORIO',
+    'M3_EXAMENES_SIMULACROS',
+    'M3_GENERADOR_EXAMENES',
     'M6_Comunidad_y_Colaboración',
     
     'cloudinary',

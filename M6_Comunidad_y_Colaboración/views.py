@@ -37,6 +37,7 @@ def home(request):
         'todas_comunidades': todas_comunidades,
     }
     return render(request, "foro/inicio.html", context)
+
 @login_required 
 def comunidad(request):
     return render(request, 'foro/comunidad.html')
@@ -305,10 +306,6 @@ def asistente_ia(request):
 
         return JsonResponse({'respuesta': respuesta})
     return render(request, "foro/asistente_ia.html")
-
-@login_required
-def principio(request):
-    return render(request, 'foro/principio.html')
 
 @login_required
 def unirse_a_conversacion(request, comunidad_id):
