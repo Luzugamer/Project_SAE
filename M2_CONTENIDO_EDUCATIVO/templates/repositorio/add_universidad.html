@@ -8,7 +8,7 @@
 {% block content %}
 <!-- CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/css/bootstrap-select.min.css">
-<link rel="stylesheet" href="{% static 'add_universidad/add_universidad.css' %}">
+<link rel="stylesheet" href="{% static 'add_universidad/css/add_universidad_main.css' %}">
 
 <!-- Contenedor del formulario -->
 <div class="form-container" {% if form.instance.pk %}data-edit="true"{% endif %}>
@@ -157,5 +157,5 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.18/js/bootstrap-select.min.js"></script>
 
 <!-- Módulo principal (type="module") -->
-<script type="module" src="{% static 'add_universidad/add_universidad_main.js' %}"></script>
+<script type="module" src="{% static 'add_universidad/js/add_universidad_main.js' %}"></script>
 {% endblock %}

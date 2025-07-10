@@ -1,0 +1,124 @@
+.file-upload-container {
+    position: relative;
+}
+
+.custom-file-input {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.custom-file-input-wrapper {
+    position: relative;
+    overflow: visible;
+}
+
+.custom-file-input input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Etiqueta de archivo personalizada */
+.file-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border: 2px dashed #e0e0e0;
+    border-radius: var(--border-radius);
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-label:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(58, 134, 255, 0.05);
+}
+
+.file-label .icon {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.file-label .file-text {
+    pointer-events: none;
+}
+
+/* Contenedor de logo */
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.logo-container .clearable-file-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.logo-container .clearable-file-input a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.logo-container .clearable-file-input a:hover {
+    text-decoration: underline;
+}
+
+.logo-container .clearable-file-input input[type="file"] {
+    margin-top: 5px;
+}
+
+.logo-container .clearable-file-input .currently {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.logo-container .clearable-file-input .clear {
+    display: block;
+    margin-top: 5px;
+}
+
+/* Logo actual */
+.current-logo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.current-logo-img {
+    max-width: 150px;
+    max-height: 150px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    padding: 5px;
+}
+
+.logo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.clear-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.clear-checkbox input {
+    margin: 0;
+}
+
+.clear-checkbox label {
+    cursor: pointer;
+}

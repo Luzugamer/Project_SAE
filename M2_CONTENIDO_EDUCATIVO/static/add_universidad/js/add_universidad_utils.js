@@ -65,9 +65,15 @@ export function prepareFormData(form) {
 
     if (tipo === 'admision') {
         const pais = formData.get('pais');
+        const carrera = formData.get('carrera');
         if (pais && pais.trim() !== '') {
             cleanFormData.append('pais', pais.trim());
         }
+
+        if (carrera && carrera.trim() !== '') {
+            cleanFormData.append('carrera', carrera.trim()); 
+        }
+
         // Asegurar que campos no relacionados no se envíen
     } else if (tipo === 'ejercicios' || tipo === 'otro') {
         const curso = formData.get('curso');
@@ -152,8 +158,13 @@ export function hideModal(modal) {
 // Utilidades para mostrar/ocultar elementos
 export function showElement(element) {
     if (element) {
-        element.style.display = 'block';
+        element.style.removeProperty('display');
         element.removeAttribute('aria-hidden');
+
+        // Si es un selectpicker, asegurarse de que se repinte correctamente
+        if ($(element).hasClass('selectpicker')) {
+            setTimeout(() => $(element).selectpicker('refresh'), 50);
+        }
     }
 }
 

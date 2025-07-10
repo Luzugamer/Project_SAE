@@ -1,0 +1,16 @@
+:root {
+    --primary-color: #3a86ff;
+    --secondary-color: #8338ec;
+    --accent-color: #ff006e;
+    --dark-color: #1a1a2e;
+    --light-color: #f8f9fa;
+    --success-color: #06d6a0;
+    --warning-color: #ffbe0b;
+    --border-radius: 8px;
+}
+
+/* Estilos base del body */
+body {
+    background-color: #f5f7fa;
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
