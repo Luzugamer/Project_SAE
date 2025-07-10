@@ -545,3 +545,8 @@ body {
 
 }
 
+.field-error {
+    border: 1px solid #ff006e !important;
+    background-color: rgba(255, 0, 110, 0.05);
+    transition: all 0.3s ease;
+}

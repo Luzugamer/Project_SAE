@@ -204,6 +204,22 @@ PAISES_CHOICES = [
     ('ZW', 'Zimbabue'),
 ]
 
+# Niveles académicos para solucionarios de ejercicios
+NIVEL_CHOICES = [
+    ('basico', 'Básico'),
+    ('intermedio', 'Intermedio'),
+    ('avanzado', 'Avanzado'),
+    ('universitario', 'Universitario'),
+]
+
+# Materias para solucionarios de ejercicios
+CARRERA_CHOICES = [
+    ('ingenieria', 'Ingeniería'),
+    ('administracion', 'Administración'),
+    ('ciencias_sociales', 'Ciencias Sociales'),
+    ('ciencias_de_la_salud', 'Ciencias de la Salud'),
+]
+
 
 class Universidad(models.Model):
     TIPO_SOLUCIONARIO_CHOICES = [
@@ -213,32 +229,38 @@ class Universidad(models.Model):
     ]
 
     CURSOS_CHOICES = [
-    ('MAT', 'Matemática'),
-    ('COM', 'Comunicación'),
-    ('CTA', 'Ciencia, Tecnología y Ambiente'),
-    ('PER', 'Persona, Familia y Relaciones Humanas'),
-    ('HIS', 'Historia'),
-    ('GEO', 'Geografía'),
-    ('CIV', 'Civismo'),
-    ('RAZ', 'Razonamiento Verbal'),
-    ('RM', 'Razonamiento Matemático'),
-    ('TRI', 'Trigonometría'),
-    ('ALG', 'Álgebra'),
-    ('GEO2', 'Geometría'),
-    ('ARI', 'Aritmética'),
-    ('BIO', 'Biología'),
-    ('QUI', 'Química'),
-    ('FIS', 'Física'),
-    ('ING', 'Inglés'),
-    ('APT', 'Aptitud Académica'),
-    ('OTR', 'Otro'),
+        ('MAT', 'Matemática'),
+        ('COM', 'Comunicación'),
+        ('CTA', 'Ciencia, Tecnología y Ambiente'),
+        ('PER', 'Persona, Familia y Relaciones Humanas'),
+        ('HIS', 'Historia'),
+        ('GEO', 'Geografía'),
+        ('CIV', 'Civismo'),
+        ('RAZ', 'Razonamiento Verbal'),
+        ('RM', 'Razonamiento Matemático'),
+        ('TRI', 'Trigonometría'),
+        ('ALG', 'Álgebra'),
+        ('GEO2', 'Geometría'),
+        ('ARI', 'Aritmética'),
+        ('BIO', 'Biología'),
+        ('QUI', 'Química'),
+        ('FIS', 'Física'),
+        ('ING', 'Inglés'),
+        ('APT', 'Aptitud Académica'),
+        ('OTR', 'Otro'),
     ]
 
-    tipo_solucionario = models.CharField(max_length=50, choices=TIPO_SOLUCIONARIO_CHOICES, default='admision')
-    curso = models.CharField(max_length=10, choices=CURSOS_CHOICES, blank=True, null=True)
-    nombre = models.CharField(max_length=255)
-    pais = models.CharField(max_length=100, choices=PAISES_CHOICES, blank=True, null=True)
-    logo = models.ImageField(upload_to='logos_universidades/')
+    # Campo principal que define el tipo de repositorio
+    tipo_solucionario = models.CharField(
+        max_length=50, 
+        choices=TIPO_SOLUCIONARIO_CHOICES, 
+        default='admision',
+        verbose_name='Tipo de Repositorio'
+    )
+    
+    # Campos comunes
+    nombre = models.CharField(max_length=255, verbose_name='Nombre')
+    logo = models.ImageField(upload_to='logos_universidades/', verbose_name='Logo')
     codigo_modular = models.CharField(max_length=10, blank=True, null=True)
     institucion_educativa = models.CharField(max_length=255, blank=True, null=True)
     departamento = models.CharField(max_length=100, blank=True, null=True)
@@ -246,6 +268,41 @@ class Universidad(models.Model):
     distrito = models.CharField(max_length=100, blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     profesor_creador = models.ForeignKey(Usuario, null=True, blank=True, on_delete=models.SET_NULL)
+    
+    # Campos específicos para exámenes de admisión
+    pais = models.CharField(
+        max_length=100, 
+        choices=PAISES_CHOICES, 
+        blank=True, 
+        null=True,
+        verbose_name='País'
+    )
+
+
+    carrera = models.CharField(
+        max_length=50, 
+        choices=CARRERA_CHOICES, 
+        blank=True, 
+        null=True,
+        verbose_name='Carrera'
+    )
+
+    # Campos específicos para solucionarios de ejercicios
+    curso = models.CharField(
+        max_length=10, 
+        choices=CURSOS_CHOICES, 
+        blank=True, 
+        null=True,
+        verbose_name='Curso'
+    )
+
+    nivel = models.CharField(
+        max_length=20, 
+        choices=NIVEL_CHOICES, 
+        blank=True, 
+        null=True,
+        verbose_name='Nivel Académico'
+    )
 
     def get_pais_display(self):
         return dict(PAISES_CHOICES).get(self.pais, self.pais)
@@ -256,16 +313,60 @@ class Universidad(models.Model):
         return self.nombre
 
     def clean(self):
+        """Validación condicional según el tipo de repositorio"""
         if self.tipo_solucionario == 'admision':
-            if not self.pais or not self.nombre or not self.logo:
-                raise ValidationError("Los campos 'país', 'nombre' y 'logo' son obligatorios para exámenes de admisión.")
-        elif self.tipo_solucionario in ['ejercicios', 'otro']:
-            if '-' not in self.nombre:
-                raise ValidationError("El nombre del solucionario de ejercicios debe tener el formato: 'Curso - Tema'.")
+            # Para exámenes de admisión: requerir país y curso
+            if not self.pais:
+                raise ValidationError("El campo 'País' es obligatorio para exámenes de admisión.")
+            if not self.carrera:
+                raise ValidationError("El campo 'Carrera' es obligatorio para exámenes de admisión.")
+            if not self.nombre:
+                raise ValidationError("El campo 'Nombre' es obligatorio.")
+            if not self.logo:
+                raise ValidationError("El campo 'Logo' es obligatorio.")
+                
+        elif self.tipo_solucionario == 'ejercicios':
+            # Para solucionarios de ejercicios: requerir materia y nivel
+            if not self.curso:
+                raise ValidationError("El campo 'Curso' es obligatorio para solucionarios de ejercicios.")
+            if not self.nivel:
+                raise ValidationError("El campo 'Nivel Académico' es obligatorio para solucionarios de ejercicios.")
+            if not self.nombre:
+                raise ValidationError("El campo 'Nombre' es obligatorio.")
+            if not self.logo:
+                raise ValidationError("El campo 'Logo' es obligatorio.")
+                
+        elif self.tipo_solucionario == 'otro':
+            # Para otros tipos: solo validar campos básicos
+            if not self.nombre:
+                raise ValidationError("El campo 'Nombre' es obligatorio.")
+            if not self.logo:
+                raise ValidationError("El campo 'Logo' es obligatorio.")
+
+    def save(self, *args, **kwargs):
+        # Limpiar campos no utilizados según el tipo
+        if self.tipo_solucionario == 'admision':
+            # Limpiar campos de solucionarios de ejercicios
+            self.curso = None
+            self.nivel = None
+        elif self.tipo_solucionario == 'ejercicios':
+            # Limpiar campos de exámenes de admisión
+            self.carrera = None
+            self.pais = None
+        elif self.tipo_solucionario == 'otro':
+            # Limpiar todos los campos específicos
+            self.pais = None
+            self.carrera = None
+            self.curso = None
+            self.nivel = None
+            
+        super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ('nombre', 'codigo_modular')
         ordering = ['nombre']
+        verbose_name = 'Universidad/Repositorio'
+        verbose_name_plural = 'Universidades/Repositorios'
 
 
 class Examen(models.Model):

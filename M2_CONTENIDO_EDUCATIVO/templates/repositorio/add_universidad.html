@@ -22,9 +22,24 @@
             {{ form.tipo_solucionario }}
         </div>
 
-        <div class="form-field" id="campo-curso">
+        <div class="form-field" id="campo-curso" style="display: none;" style="display: none;">
             <label for="{{ form.curso.id_for_label }}">Curso:</label>
             {{ form.curso }}
+        </div>
+        
+        <div class="form-field" id="campo-nivel" style="display: none;">
+            <label for="{{ form.nivel.id_for_label }}">Nivel Académico:</label>
+            {{ form.nivel }}
+        </div>
+
+        <div class="form-field" id="campo-carrera" style="display: none;">
+            <label for="{{ form.carrera.id_for_label }}">Carrera:</label>
+            {{ form.carrera }}
+        </div>
+
+        <div class="form-field select-container" id="campo-pais" style="display: none;">
+            <label for="{{ form.pais.id_for_label }}">País:</label>
+            {{ form.pais }}
         </div>
 
         <div class="form-field" id="campo-nombre">
@@ -32,10 +47,6 @@
             {{ form.nombre }}
         </div>
 
-        <div class="form-field select-container" id="campo-pais">
-            <label for="{{ form.pais.id_for_label }}">País:</label>
-            {{ form.pais }}
-        </div>
 
         <div class="form-field" style="display: none;">
             <label for="{{ form.codigo_modular.id_for_label }}">Código Modular:</label>
@@ -133,8 +144,7 @@
     window.APP_CONFIG = {
         URLs: {
             repositorio: "{% url 'repositorio' %}",
-            add_admision: "{% url 'add_universidad_admision' %}",
-            add_general: "{% url 'add_solucionario_general' %}"            
+            add_universidad: "{% url 'add_universidad' %}"
         },
         CSRF_TOKEN: "{{ csrf_token }}"
     };

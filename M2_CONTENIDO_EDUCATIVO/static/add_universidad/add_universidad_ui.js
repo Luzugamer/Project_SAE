@@ -3,15 +3,15 @@ export function setupUI() {
     const previewContainer = document.querySelector('.logo-preview');
     const formFields = document.querySelectorAll('.form-field');
 
-    // Configuración de estilos para campos de formulario
+    // Configurar animaciones de campos
     setupFormFields(formFields);
 
-    // Configuración del input de archivo
+    // Input de archivo
     if (fileInput) {
         setupFileInput(fileInput, previewContainer);
     }
 
-    // Configuración de eventos para el selectpicker
+    // Marcar selects personalizados
     $('.select-pais').on('loaded.bs.select', function () {
         $(this).parent().addClass('animated-select');
     });
@@ -23,13 +23,8 @@ function setupFormFields(formFields) {
     formFields.forEach(field => {
         const input = field.querySelector('input, select, textarea');
         if (input) {
-            input.addEventListener('focus', () => {
-                animateFieldFocus(field);
-            });
-
-            input.addEventListener('blur', () => {
-                animateFieldBlur(field);
-            });
+            input.addEventListener('focus', () => animateFieldFocus(field));
+            input.addEventListener('blur', () => animateFieldBlur(field));
         }
     });
 }
@@ -51,7 +46,6 @@ function animateFieldBlur(field) {
 }
 
 function setupFileInput(fileInput, previewContainer) {
-    // Solo crear el label si no existe ya
     if (!fileInput.nextElementSibling?.classList.contains('file-label')) {
         const fileLabel = document.createElement('div');
         fileLabel.className = 'file-label';
@@ -60,8 +54,7 @@ function setupFileInput(fileInput, previewContainer) {
             <span class="icon">📁</span>
         `;
         fileInput.parentNode.insertBefore(fileLabel, fileInput.nextSibling);
-        
-        // Estilos para el input de archivo
+
         fileInput.style.opacity = '0';
         fileInput.style.position = 'absolute';
         fileInput.style.width = '100%';
@@ -80,12 +73,12 @@ function handleFileChange(fileInput, previewContainer) {
     const file = fileInput.files[0];
     const fileLabel = fileInput.nextElementSibling;
     const fileName = file?.name || 'Seleccionar archivo';
-    
+
     if (fileLabel && fileLabel.classList.contains('file-label')) {
         fileLabel.querySelector('.file-text').textContent = fileName;
 
         if (file) {
-            const maxSize = 2 * 1024 * 1024;
+            const maxSize = 2 * 1024 * 1024; // 2MB
             if (file.size > maxSize) {
                 showFileError(fileInput, fileLabel);
                 return;
@@ -130,4 +123,16 @@ function previewFile(file, previewContainer) {
         `;
     };
     reader.readAsDataURL(file);
+}
+
+// Opcional: para marcar campos con error
+export function highlightErrorField(name) {
+    const input = document.querySelector(`[name="${name}"]`);
+    const field = input?.closest('.form-field');
+    if (field) {
+        field.classList.add('field-error');
+        setTimeout(() => {
+            field.classList.remove('field-error');
+        }, 2000);
+    }
 }

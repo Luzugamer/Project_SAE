@@ -6,15 +6,34 @@ export function setupFormSubmission(form, submitBtn, originalBtnText, isEditMode
         e.preventDefault();
 
         const formDataOriginal = new FormData(form);
-        const validationErrors = validateForm(formDataOriginal);
+        const tipo = formDataOriginal.get('tipo_solucionario');
+        const errors = {};
 
-        if (validationErrors) {
-            const errorMessages = Object.values(validationErrors).join('\n');
+        // Validaciones condicionales
+        if (tipo === 'admision') {
+            if (!formDataOriginal.get('pais')) {
+                errors['pais'] = 'El campo país es obligatorio.';
+            }
+            if (!formDataOriginal.get('carrera')) {
+                errors['carrera'] = 'El campo carrera es obligatorio.';
+            }
+        } else if (tipo === 'ejercicios') {
+            if (!formDataOriginal.get('curso')) {
+                errors['curso'] = 'El campo curso es obligatorio.';
+            }
+            if (!formDataOriginal.get('nivel')) {
+                errors['nivel'] = 'El campo nivel es obligatorio.';
+            }
+        }
+
+        // Mostrar errores si los hay
+        if (Object.keys(errors).length > 0) {
+            const errorMessages = Object.values(errors).join('\n');
             showError('Por favor corrige los siguientes errores:\n' + errorMessages);
             return;
         }
 
-        const cleanFormData = prepareFormData(form);
+        const cleanFormData = prepareFormData(form);  // Limpia campos ocultos/vacíos innecesarios
 
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -68,3 +87,4 @@ export function setupFormSubmission(form, submitBtn, originalBtnText, isEditMode
         });
     });
 }
+

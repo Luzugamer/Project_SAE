@@ -5,18 +5,18 @@ from django.urls import reverse
 
 from .base import tiene_permiso_profesor_sobre
 from M2_CONTENIDO_EDUCATIVO.models import Universidad
-from M2_CONTENIDO_EDUCATIVO.forms import UniversidadAdmisionForm  
-from M2_CONTENIDO_EDUCATIVO.forms import SolucionarioGeneralForm
+from M2_CONTENIDO_EDUCATIVO.forms import UniversidadForm 
 from Login.models import UsuarioRol
 
 
-
-def add_universidad_admision(request):
+def add_universidad(request):
     if not request.user.is_authenticated or not UsuarioRol.objects.filter(usuario=request.user, rol__nombre_rol='profesor').exists():
         return redirect('repositorio')
 
+    from M2_CONTENIDO_EDUCATIVO.forms import UniversidadForm  # Unico Form
+
     if request.method == 'POST':
-        form = UniversidadAdmisionForm(request.POST, request.FILES, user=request.user)
+        form = UniversidadForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             universidad = form.save(commit=False)
             universidad.profesor_creador = request.user
@@ -45,6 +45,7 @@ def add_universidad_admision(request):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'errors': form.errors}, status=400)
 
+    # Valores iniciales
     initial = {
         'codigo_modular': request.user.codigo_modular,
         'institucion_educativa': request.user.institucion_educativa,
@@ -52,53 +53,8 @@ def add_universidad_admision(request):
         'provincia': request.user.provincia,
         'distrito': request.user.distrito,
     }
-    form = UniversidadAdmisionForm(initial=initial, user=request.user)
+    form = UniversidadForm(initial=initial, user=request.user)
     return render(request, 'repositorio/add_universidad.html', {'form': form})
-
-def add_solucionario_general(request):
-    if not request.user.is_authenticated or not UsuarioRol.objects.filter(usuario=request.user, rol__nombre_rol='profesor').exists():
-        return redirect('repositorio')
-
-    if request.method == 'POST':
-        form = SolucionarioGeneralForm(request.POST, request.FILES, user=request.user)
-        if form.is_valid():
-            universidad = form.save(commit=False)
-            universidad.profesor_creador = request.user
-            universidad.save()
-
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                if request.POST.get('confirm_save') == 'true':
-                    return JsonResponse({
-                        'success': True,
-                        'redirect': True,
-                        'add_another': request.POST.get('add_another') == 'true'
-                    })
-
-                return JsonResponse({
-                    'success': True,
-                    'preview': True,
-                    'is_edit': False,
-                    'nombre': universidad.nombre,
-                    'pais': universidad.get_pais_display(),
-                    'tipo_solucionario': universidad.get_tipo_solucionario_display(),
-                    'logo_url': universidad.logo.url if universidad.logo else '',
-                })
-
-            return redirect('repositorio')
-
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
-
-    initial = {
-        'codigo_modular': request.user.codigo_modular,
-        'institucion_educativa': request.user.institucion_educativa,
-        'departamento': request.user.departamento,
-        'provincia': request.user.provincia,
-        'distrito': request.user.distrito,
-    }
-    form = SolucionarioGeneralForm(initial=initial, user=request.user)
-    return render(request, 'repositorio/add_universidad.html', {'form': form})
-
 
 def editar_universidad(request, universidad_id):
     universidad = get_object_or_404(Universidad, id=universidad_id)

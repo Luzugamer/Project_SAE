@@ -179,19 +179,11 @@
     {% with user.usuariorol_set.first as relacion %}
     {% if user.is_authenticated and relacion and relacion.rol.nombre_rol == 'profesor' %}
         <div class="tarjeta tarjeta-agregar">
-            <a href="{% url 'add_universidad_admision' %}" style="text-decoration: none; color: inherit;">
+            <a href="{% url 'add_universidad' %}" style="text-decoration: none; color: inherit;">
                 <div class="icono-mas">+</div>
                 <p class="agregar-texto">Agregar un repositorio de exámenes de admisión</p>
             </a>
         </div>
-
-        <div class="tarjeta tarjeta-agregar">
-            <a href="{% url 'add_solucionario_general' %}" style="text-decoration: none; color: inherit;">
-                <div class="icono-mas">+</div>
-                <p class="agregar-texto">Agregar un solucionario general o de ejercicios</p>
-            </a>
-        </div>
-
 
         <div id="modal-formulario" class="modal" style="display:none;">
             <div class="modal-content" id="modal-formulario-contenido">

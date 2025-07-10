@@ -45,47 +45,99 @@ export function showError(message) {
 export function prepareFormData(form) {
     const formData = new FormData(form);
     const cleanFormData = new FormData();
-    
-    // Campos básicos del formulario
-    const campos = [
+
+    // Siempre necesarios
+    const campos_comunes = [
         'csrfmiddlewaretoken', 'tipo_solucionario', 'nombre', 'logo',
-        'codigo_modular', 'institucion_educativa', 'departamento', 
-        'provincia', 'distrito', 'pais', 'curso'
+        'codigo_modular', 'institucion_educativa',
+        'departamento', 'provincia', 'distrito'
     ];
-    
-    campos.forEach(campo => {
+
+    campos_comunes.forEach(campo => {
         const valor = formData.get(campo);
         if (valor !== null && (typeof valor === 'string' ? valor.trim() !== '' : true)) {
             cleanFormData.append(campo, valor);
         }
     });
-    
+
+    // Obtener el tipo de solucionario actual
+    const tipo = formData.get('tipo_solucionario');
+
+    if (tipo === 'admision') {
+        const pais = formData.get('pais');
+        if (pais && pais.trim() !== '') {
+            cleanFormData.append('pais', pais.trim());
+        }
+        // Asegurar que campos no relacionados no se envíen
+    } else if (tipo === 'ejercicios' || tipo === 'otro') {
+        const curso = formData.get('curso');
+        const carrera = formData.get('carrera');
+        const nivel = formData.get('nivel');
+
+        if (curso && curso.trim() !== '') {
+            cleanFormData.append('curso', curso.trim());
+        }
+        if (carrera && carrera.trim() !== '') {
+            cleanFormData.append('carrera', carrera.trim());
+        }
+        if (nivel && nivel.trim() !== '') {
+            cleanFormData.append('nivel', nivel.trim());
+        }
+    }
+
     return cleanFormData;
 }
 
 // Validación básica del formulario
 export function validateForm(formData) {
     const errors = {};
+
+    const tipo = formData.get('tipo_solucionario');
     const nombre = formData.get('nombre')?.trim();
-    
-    // Validación de nombre
+
+    // Validar siempre nombre
     if (!nombre) {
         errors.nombre = 'El nombre es requerido';
     }
-    
+
+    // Validación condicional según tipo
+    if (tipo === 'admision') {
+        const pais = formData.get('pais')?.trim();
+        if (!pais) {
+            errors.pais = 'El país es requerido para repositorios de admisión';
+        }
+    } else if (tipo === 'ejercicios' || tipo === 'otro') {
+        const curso = formData.get('curso')?.trim();
+        const carrera = formData.get('carrera')?.trim();
+        const nivel = formData.get('nivel')?.trim();
+
+        if (!curso) {
+            errors.curso = 'El curso es requerido para solucionarios de ejercicios u otros';
+        }
+        if (!carrera) {
+            errors.carrera = 'La materia es requerida';
+        }
+        if (!nivel) {
+            errors.nivel = 'El nivel es requerido';
+        }
+    }
+
     return Object.keys(errors).length > 0 ? errors : null;
 }
 
 // Inicialización de selectpicker con opciones
 export function initializeSelectPicker() {
-    $('.select-pais').selectpicker({
-        liveSearch: true,
-        size: 5,
-        style: 'btn-light',
-        showSubtext: true,
-        noneSelectedText: 'Seleccione un país...',
-        dropupAuto: false
+    // Inicializar todos los selectpickers
+    $('.selectpicker').selectpicker({
+        noneSelectedText: 'Seleccione una opción',
+        noneResultsText: 'No se encontraron resultados',
+        countSelectedText: function(numSelected, numTotal) {
+            return (numSelected == 1) ? "{0} ítem seleccionado" : "{0} ítems seleccionados";
+        }
     });
+    
+    // Refrescar todos los selectpickers
+    $('.selectpicker').selectpicker('refresh');
 }
 
 // Manejo de modales

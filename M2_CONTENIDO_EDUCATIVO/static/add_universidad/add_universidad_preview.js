@@ -1,42 +1,47 @@
-import { hideModal, showElement, hideElement } from './add_universidad_utils.js';
+import { hideModal, showElement, hideElement, showError } from './add_universidad_utils.js';
 
+// Acciones de los botones del modal
 export function setupModalActions(modalPrevia, isEditMode) {
     document.getElementById('btn-editar')?.addEventListener('click', cerrarModalPrevia);
     document.getElementById('btn-guardar')?.addEventListener('click', () => confirmarGuardado(false));
     document.getElementById('btn-agregar-otra')?.addEventListener('click', () => confirmarGuardado(true));
 
     if (isEditMode) {
-        document.getElementById('btn-agregar-otra')?.style.setProperty('display', 'none');
+        hideElement(document.getElementById('btn-agregar-otra'));
     }
 }
 
+// Permite que la vista previa se actualice dinámicamente mientras el usuario edita
 export function setupPreviewUpdater() {
-    const camposParaPrevia = ['nombre', 'pais', 'tipo_solucionario'];
-    camposParaPrevia.forEach(campo => {
+    ['nombre', 'pais', 'tipo_solucionario'].forEach(campo => {
         const input = document.querySelector(`[name="${campo}"]`);
-        if (input) input.addEventListener('change', actualizarPreviaRapida);
+        if (input) {
+            input.addEventListener('change', actualizarPreviaRapida);
+        }
     });
 }
 
+// Actualiza la previsualización rápida en tiempo real
 function actualizarPreviaRapida() {
-    const nombre = document.querySelector('[name="nombre"]').value;
-    const pais = document.querySelector('[name="pais"] option:checked')?.textContent;
-    const tipo = document.querySelector('[name="tipo_solucionario"] option:checked')?.textContent;
+    const nombre = document.querySelector('[name="nombre"]')?.value || '';
+    const tipo = document.querySelector('[name="tipo_solucionario"] option:checked')?.textContent || '';
+    const pais = document.querySelector('[name="pais"] option:checked')?.textContent || '';
 
-    if (nombre) document.getElementById('previa-nombre').textContent = nombre;
-    if (pais) document.getElementById('previa-pais').textContent = pais;
-    if (tipo) document.getElementById('previa-tipo').textContent = tipo;
+    document.getElementById('previa-nombre').textContent = nombre;
+    document.getElementById('previa-tipo').textContent = tipo;
+
+    // Mostrar país solo si tipo es admisión
+    const tipoValor = document.querySelector('[name="tipo_solucionario"]')?.value;
+    document.getElementById('previa-pais').textContent = (tipoValor === 'admision') ? pais : '';
 }
 
+// Muestra el modal de previsualización con datos reales del servidor
 export function mostrarPrevisualizacion(data) {
     const modal = document.getElementById('modal-previa');
-    if (!modal) {
-        console.warn('No se encontró el modal con ID "modal-previa"');
-        return;
-    }
+    if (!modal) return;
 
     document.getElementById('previa-nombre').textContent = data.nombre || '';
-    document.getElementById('previa-pais').textContent = data.pais || '';
+    document.getElementById('previa-pais').textContent = data.tipo_solucionario === 'admision' ? (data.pais || '') : '';
     document.getElementById('previa-tipo').textContent = data.tipo_solucionario || '';
 
     const logo = document.getElementById('previa-logo');
@@ -48,9 +53,8 @@ export function mostrarPrevisualizacion(data) {
     }
 
     if (data.is_edit) {
-        const btnAgregarOtra = document.getElementById('btn-agregar-otra');
+        hideElement(document.getElementById('btn-agregar-otra'));
         const btnGuardar = document.getElementById('btn-guardar');
-        if (btnAgregarOtra) hideElement(btnAgregarOtra);
         if (btnGuardar) btnGuardar.textContent = 'Guardar cambios';
     }
 
@@ -58,16 +62,18 @@ export function mostrarPrevisualizacion(data) {
     bootstrapModal.show();
 }
 
+// Cierra el modal
 export function cerrarModalPrevia() {
     const modal = document.getElementById('modal-previa');
     if (modal) hideModal(modal);
 }
 
+// Confirma el guardado real del formulario tras la previsualización
 export function confirmarGuardado(addAnother) {
     const form = document.getElementById('form-universidad');
     if (!form) return;
 
-    const buttons = document.querySelectorAll('.modal-actions button');
+    const buttons = document.querySelectorAll('.modal-footer button');
     buttons.forEach(btn => {
         btn.disabled = true;
         btn.dataset.originalText = btn.textContent;
@@ -90,7 +96,7 @@ export function confirmarGuardado(addAnother) {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await response.text();
-            throw new Error('El servidor devolvió una respuesta no JSON');
+            throw new Error('El servidor devolvió una respuesta no JSON:\n' + text);
         }
         return response.json();
     })
@@ -98,9 +104,9 @@ export function confirmarGuardado(addAnother) {
         if (data.success) {
             cerrarModalPrevia();
             if (data.redirect) {
-                window.location.href = URLS.repositorio;
+                window.location.href = window.APP_CONFIG.URLs.repositorio;
             } else if (data.add_another) {
-                window.location.href = URLS.add_universidad;
+                window.location.href = window.APP_CONFIG.URLs.add_admision; // o general, según tipo
             }
         } else {
             throw new Error(typeof data.errors === 'string' ? data.errors : 'Error al guardar. Revisa los campos.');
