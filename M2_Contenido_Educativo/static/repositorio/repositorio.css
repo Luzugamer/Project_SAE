@@ -222,19 +222,6 @@ h1 {
     border-color: var(--dark-purple);
 }
 
-.examen-icon {
-    width: 32px;
-    height: 32px;
-    background: var(--primary-green);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    color: var(--white);
-    flex-shrink: 0;
-}
-
 .examen-info h4 {
     color: var(--dark-purple);
     font-size: 0.95rem;
@@ -558,6 +545,24 @@ h1 {
     gap: 8px;
 }
 
+.btn-editar {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 6px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    color: #2D1B69;
+}
+
 .btn-editar, .btn-eliminar {
     background: transparent;
     border: none;
@@ -565,6 +570,276 @@ h1 {
     font-size: 1.1rem;
 }
 
+.btn-editar:hover {
+    transform: translateY(-2px);
+    color: #4a3a8a;
+    background: rgba(45, 27, 105, 0.08);
+}
+
+.btn-editar:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.btn-editar:focus:not(:active)::after {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+/* Icono con animación */
+.btn-editar i {
+    transition: transform 0.3s ease;
+}
+
+.btn-editar:hover i {
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Tooltip para el botón */
+.btn-editar .tooltip {
+    visibility: hidden;
+    width: 80px;
+    background-color: #2D1B69;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+}
+
+.btn-editar .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #2D1B69 transparent transparent transparent;
+}
+
+.btn-editar:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Animación de pulso al hacer clic */
+.btn-editar.clicked {
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Efecto de elevación */
+.tarjeta .examen-actions {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.tarjeta:hover .examen-actions {
+    opacity: 1;
+}
+
+/* Estilo base del botón */
+.btn-editar-repositorio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #2D1B69 0%, #4a3a8a 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 12px rgba(45, 27, 105, 0.2);
+    z-index: 1;
+}
+
+/* Efecto hover */
+.btn-editar-repositorio:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(45, 27, 105, 0.3);
+    background: linear-gradient(135deg, #3a2678 0%, #5a48a0 100%);
+}
+
+/* Efecto activo/presionado */
+.btn-editar-repositorio:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(45, 27, 105, 0.2);
+}
+
+/* Efecto de iluminación */
+.btn-editar-repositorio::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+    z-index: -1;
+}
+
+.btn-editar-repositorio:hover::before {
+    left: 100%;
+}
+
+/* Animación del icono */
+.btn-editar-repositorio .icono-editar {
+    transition: transform 0.3s ease;
+}
+
+.btn-editar-repositorio:hover .icono-editar {
+    transform: rotate(-15deg) scale(1.1);
+}
+
+/* Efecto de onda al hacer clic */
+.btn-editar-repositorio::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-editar-repositorio:focus:not(:active)::after {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+/* Estilo base del botón eliminar */
+.btn-eliminar-repositorio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+    z-index: 1;
+}
+
+/* Efecto hover */
+.btn-eliminar-repositorio:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(229, 57, 53, 0.3);
+    background: linear-gradient(135deg, #ef5350 0%, #d32f2f 100%);
+}
+
+/* Efecto activo/presionado */
+.btn-eliminar-repositorio:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.2);
+}
+
+/* Efecto de iluminación */
+.btn-eliminar-repositorio::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+    z-index: -1;
+}
+
+.btn-eliminar-repositorio:hover::before {
+    left: 100%;
+}
+
+/* Animación del icono */
+.btn-eliminar-repositorio .icono-eliminar {
+    transition: all 0.3s ease;
+}
+
+.btn-eliminar-repositorio:hover .icono-eliminar {
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Efecto de onda al hacer clic */
+.btn-eliminar-repositorio::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-eliminar-repositorio:focus:not(:active)::after {
+    animation: ripple 0.6s ease-out;
+}
+
+
+/* Efecto de carga */
+.btn-eliminar-repositorio.loading {
+    pointer-events: none;
+}
+
+.btn-eliminar-repositorio.loading .icono-eliminar {
+    animation: spin 1s linear infinite;
+}
 
 .modal {
     position: fixed;
@@ -764,4 +1039,106 @@ h1 {
 
 .btn-filtro-circular.open {
     background-color: #379e72;
+}
+
+.examen-item {
+    position: relative;
+    transition: all 0.3s ease;
+    border: 1px solid #eaeaea;
+}
+
+.examen-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+
+
+/* Mejores botones de acción */
+.examen-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.examen-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.examen-actions button:hover {
+    background: #f5f5f5;
+    transform: scale(1.1);
+}
+
+/* Formularios más modernos */
+.formulario-examen {
+    background: #f9f9f9;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 15px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.formulario-examen .form-group {
+    margin-bottom: 15px;
+}
+
+.formulario-examen label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
+}
+
+/* Efectos de hover para las tarjetas principales */
+.tarjeta:hover .tarjeta-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Mejores sombras y transiciones */
+.tarjeta {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.tarjeta:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.08);
+}
+
+/* Animación para los filtros */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#contenedor-filtros.show {
+    animation: slideDown 0.3s ease-out;
+}
+
+.examen-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pdf-icon {
+    font-size: 1.5rem;
+    color: #555;
+}
+
+.examen-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f5f5;
+    flex-shrink: 0;
 }

@@ -126,16 +126,23 @@ body {
 }
 
 .setup-cancel {
-  text-align: center;
-  margin-top: 20px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+  white-space: nowrap;
+  min-width: max-content;
+  font-size: 0.9rem;
+  flex: 1;
+  max-width: 180px;
+  cursor: pointer;
 }
 
-.setup-cancel a {
-  color: var(--color-muted);
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.setup-cancel a:hover {
-  color: var(--color-primary);
+.botones-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
 }

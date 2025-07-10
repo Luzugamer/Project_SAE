@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Comunidades</title>
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/comunidad_gestion/comunidad_gestion.css' %}">
+</head>
+<body>
+    <a href="{% url 'comunidad:principio' %}" class="back-button">
+        ← Volver al Inicio
+    </a>
+
+    <div class="container">
+        <div class="content-section">
+            <!-- Título de la página -->
+            <div class="page-title-section">
+                <h1 class="page-title">🏛️ Gestión de Comunidades</h1>
+                <p class="page-subtitle">Administra y supervisa todas las comunidades creadas</p>
+            </div>
+
+            <!-- Estadísticas generales -->
+            <div class="stats-overview">
+                <div class="overview-card">
+                    <div class="overview-number">{{ total_comunidades }}</div>
+                    <div class="overview-label">🏛️ Total Comunidades</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-number">{{ comunidades_activas }}</div>
+                    <div class="overview-label">✅ Comunidades Activas</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-number">{{ total_miembros }}</div>
+                    <div class="overview-label">👥 Total Miembros</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-number">{{ total_mensajes }}</div>
+                    <div class="overview-label">💬 Total Mensajes</div>
+                </div>
+            </div>
+
+            <!-- Mensajes del sistema -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Grid de comunidades -->
+            {% if comunidades %}
+                <div class="communities-grid">
+                    {% for comunidad in comunidades %}
+                        <div class="community-card" onclick="irAComunidad('{% url 'comunidad:comunidad_detalle' comunidad.id %}')">
+                            <div class="community-card-header">
+                                <div class="community-card-info">
+                                    <div class="community-card-icon">
+                                        {% if comunidad.icono %}
+                                            <img src="{{ comunidad.icono.url }}" alt="{{ comunidad.nombre }}">
+                                        {% else %}
+                                            🏫
+                                        {% endif %}
+                                    </div>
+                                    <div class="community-card-details">
+                                        <h3>{{ comunidad.nombre }}</h3>
+                                        <div class="community-card-institution">
+                                            {% if comunidad.institucion_afiliada %}
+                                                📍 {{ comunidad.institucion_afiliada }}
+                                            {% else %}
+                                                📍 Sin institución especificada
+                                            {% endif %}
+                                        </div>
+                                        <div class="community-card-date">
+                                            📅 Creada: {{ comunidad.fecha_creacion|date:"d/m/Y" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="community-card-body">
+                                <div class="community-description">
+                                    {{ comunidad.descripcion }}
+                                </div>
+
+                                <!-- Estadísticas mini -->
+                                <div class="community-stats-mini">
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-number">{{ comunidad.puntos_prestigio }}</div>
+                                        <div class="stat-mini-label">🏆 Prestigio</div>
+                                    </div>
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-number">{{ comunidad.get_miembros_activos.count }}</div>
+                                        <div class="stat-mini-label">👥 Miembros</div>
+                                    </div>
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-number">{{ comunidad.mensajes.count }}</div>
+                                        <div class="stat-mini-label">💬 Mensajes</div>
+                                    </div>
+                                    <div class="stat-mini">
+                                        <div class="stat-mini-number">{{ comunidad.codigo_invitacion }}</div>
+                                        <div class="stat-mini-label">🔑 Código</div>
+                                    </div>
+                                </div>
+
+                                <!-- Botones de acción -->
+                                <div class="community-actions" onclick="event.stopPropagation()">
+                                    <a href="{% url 'comunidad:editar_comunidad' comunidad.id %}" class="btn-action btn-edit">
+                                        ✏️ Editar
+                                    </a>
+                                    <a href="{% url 'comunidad:invitar_estudiantes' comunidad.id %}" class="btn-action btn-invite">
+                                        📧 Invitar
+                                    </a>
+                                    <button onclick="confirmarEliminacion({{ comunidad.id }}, '{{ comunidad.nombre }}')" 
+                                            class="btn-action btn-delete">
+                                        🗑️ Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-communities">
+                    <div class="no-communities-icon">🏛️</div>
+                    <h3>¡No hay comunidades aún!</h3>
+                    <p>Crea tu primera comunidad para comenzar a construir una red de aprendizaje.</p>
+                    <a href="{% url 'comunidad:crear_comunidad' %}" class="btn-primary">
+                        🚀 Crear Primera Comunidad
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Botón flotante para crear comunidad -->
+    {% if comunidades %}
+        <a href="{% url 'comunidad:crear_comunidad' %}" class="floating-create-btn" title="Crear Nueva Comunidad">
+            ➕
+        </a>
+    {% endif %}
+
+    <!-- Modal de confirmación para eliminar -->
+    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+            <h3 style="color: #E53935; margin-bottom: 15px;">¿Eliminar Comunidad?</h3>
+            <p style="color: #666; margin-bottom: 25px;" id="deleteMessage"></p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="cerrarModalEliminacion()" 
+                        style="padding: 10px 20px; background: #E0E0E0; border: none; border-radius: 8px; cursor: pointer;">
+                    Cancelar
+                </button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            style="padding: 10px 20px; background: #E53935; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        Sí, Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'M6_Comunidades/comunidad_gestion/comunidad_gestion.js' %}"></script>    
+</body>
+</html>

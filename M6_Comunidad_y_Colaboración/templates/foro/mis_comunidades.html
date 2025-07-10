@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Comunidades</title>
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/mis_comunidades/mis_comunidades.css' %}">
+
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Mis Comunidades</h1>
+            <p>Gestiona y explora todas tus comunidades académicas</p>
+        </div>
+
+        {% if comunidades %}
+            <div class="communities-grid">
+                {% for comunidad in comunidades %}
+                <div class="community-card">
+                    <div class="community-header" onclick="toggleCommunity('{{ comunidad.id }}')">
+                        <div class="community-icon">
+                            {% if comunidad.icono %}
+                                <img src="{{ comunidad.icono.url }}" alt="{{ comunidad.nombre }}">
+                            {% else %}
+                                🏫
+                            {% endif %}
+                        </div>
+                        <div class="community-info">
+                            <h3>{{ comunidad.nombre }}</h3>
+                            <div class="community-stats">
+                                <div class="stat-item">
+                                    <span>⭐</span>
+                                    <span>{{ comunidad.puntos_prestigio }} pts</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>👥</span>
+                                    <span>{{ comunidad.get_miembros_activos.count }} miembros</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-left: auto; font-size: 24px;" class="pulse">
+                            ⬇️
+                        </div>
+                    </div>
+
+                    <div class="community-content" id="content-{{ comunidad.id }}">
+                        <!-- Información de prestigio -->
+                        <div class="content-section">
+                            <div class="section-title">
+                                <span>🏆</span>
+                                Prestigio y Progreso
+                            </div>
+                            <div>
+                                <p><strong>Puntos actuales:</strong> {{ comunidad.puntos_prestigio }}</p>
+                                <p><strong>Próximo hito:</strong> {% widthratio comunidad.puntos_prestigio 1000 100 %}% hacia 1000 pts</p>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {% widthratio comunidad.puntos_prestigio 1000 100 %}%;">
+                                        {{ comunidad.puntos_prestigio }}/1000
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profesor a cargo -->
+                        <div class="content-section">
+                            <div class="section-title">
+                                <span>👨‍🏫</span>
+                                Profesor a Cargo
+                            </div>
+                            <div class="professor-info">
+                                <div class="professor-avatar">
+                                    {{ comunidad.creador.first_name}}
+                                </div>
+                                <div>
+                                    <div class="member-name">
+                                        {{ comunidad.creador.first_name}}
+                                    </div>
+                                    <div class="member-role">Creador de la comunidad</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Miembros activos -->
+                        <div class="content-section">
+                            <div class="section-title">
+                                <span>✅</span>
+                                Miembros Activos ({{ comunidad.get_miembros_activos.count }})
+                            </div>
+                            <div class="members-list">
+                                {% for miembro in comunidad.get_miembros_activos|slice:":5" %}
+                                <div class="member-item">
+                                    <div class="member-avatar">
+                                        {{ miembro.usuario.first_name}}
+                                    </div>
+                                    <div class="member-name">
+                                        {{ miembro.nombre_completo }}
+                                    </div>
+                                    <div class="member-role">{{ miembro.get_rol_display }}</div>
+                                </div>
+                                {% endfor %}
+                                {% if comunidad.get_miembros_activos.count > 5 %}
+                                <div class="member-item" style="justify-content: center; font-style: italic; color: #718096;">
+                                    Y {{ comunidad.get_miembros_activos.count|add:"-5" }} miembros más...
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Miembros inactivos -->
+                        {% if comunidad.get_miembros_inactivos.count > 0 %}
+                        <div class="content-section">
+                            <div class="section-title">
+                                <span>⏸️</span>
+                                Miembros Inactivos ({{ comunidad.get_miembros_inactivos.count }})
+                            </div>
+                            <div class="members-list">
+                                {% for miembro in comunidad.get_miembros_inactivos|slice:":3" %}
+                                <div class="member-item">
+                                    <div class="member-avatar inactive">
+                                        {{ miembro.usuario.first_name|first|default:miembro.usuario.username|first|upper }}
+                                    </div>
+                                    <div class="member-name">
+                                        {{ miembro.usuario.get_full_name|default:miembro.usuario.username }}
+                                    </div>
+                                    <div class="member-role">{{ miembro.get_rol_display }}</div>
+                                </div>
+                                {% endfor %}
+                                {% if comunidad.get_miembros_inactivos.count > 3 %}
+                                <div class="member-item" style="justify-content: center; font-style: italic; color: #718096;">
+                                    Y {{ comunidad.get_miembros_inactivos.count|add:"-3" }} miembros más...
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Botones de acción -->
+                        <div class="action-buttons">
+                            <a href="{% url 'comunidad:comunidad_detalle' comunidad.id %}" class="btn btn-primary">
+                                <span>👁️</span>
+                                Ver Comunidad
+                            </a>
+                            <a href="{% url 'comunidad:zona_descanso' comunidad.id %}" class="btn btn-primary">
+                                <span>☕</span>
+                                Zona Descanso
+                            </a>
+                            <a href="{% url 'comunidad:salir_comunidad' comunidad.id %}" class="btn btn-danger" 
+                               onclick="return confirm('¿Estás seguro de que quieres salir de esta comunidad?')">
+                                <span>🚪</span>
+                                Salir
+                            </a>
+                            <a href="{% url 'comunidad:reportar_comunidad' comunidad.id %}" class="btn btn-warning">
+                                <span>⚠️</span>
+                                Reportar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h2>🏫 ¡Aún no tienes comunidades!</h2>
+                <p>Explora y únete a comunidades académicas para comenzar tu experiencia educativa.</p>
+                <a href="{% url 'comunidad:inicio' %}" class="btn btn-primary">
+                    <span>🔍</span>
+                    Explorar Comunidades
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="{% static 'M6_Comunidades/mis_comunidades/mis_comunidades.js' %}"></script>    
+
+</body>
+</html>

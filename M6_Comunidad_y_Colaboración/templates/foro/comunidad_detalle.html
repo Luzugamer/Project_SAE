@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ comunidad.nombre }} - Comunidad</title>
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/comunidad_detalle/comunidad_detalle.css' %}">
+</head>
+<body>
+    {% if user.rol == 'profesor' %}
+        <a href="{% url 'comunidad:principio' %}" class="back-button">
+            ← Volver al Foro
+        </a>
+    {% else %}
+        <a href="{% url 'comunidad:inicio' %}" class="back-button">
+            ← Volver al Foro
+        </a>
+    {% endif %}
+    <div class="container">
+        <!-- Header de la Comunidad -->
+        <div class="header">
+            <div class="community-info">
+                <div class="community-icon">
+                    {% if comunidad.icono %}
+                        <img src="{{ comunidad.icono.url }}" alt="Ícono de {{ comunidad.nombre }}">
+                    {% else %}
+                        📚
+                    {% endif %}
+                </div>
+                <div class="community-details">
+                    <h1>{{ comunidad.nombre }}</h1>
+                    <div class="community-meta">
+                        {% if comunidad.institucion_afiliada %}
+                            <div class="meta-item">
+                                🏛️ {{ comunidad.institucion_afiliada }}
+                            </div>
+                        {% endif %}
+                        <div class="meta-item">
+                            👤 Creado por {{ comunidad.creador.get_full_name }}
+                        </div>
+                        <div class="meta-item">
+                            📅 {{ comunidad.fecha_creacion|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-number">{{ comunidad.puntos_prestigio }}</div>
+                <div class="stat-label">🏆 Puntos de Prestigio</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ comunidad.get_miembros_activos.count }}</div>
+                <div class="stat-label">👥 Miembros Activos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ comunidad.mensajes.count }}</div>
+                <div class="stat-label">💬 Mensajes Totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ comunidad.codigo_invitacion }}</div>
+                <div class="stat-label">🔑 Código de Invitación</div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="content-section">
+            <!-- Descripción -->
+            <h2 class="section-title">📖 Descripción</h2>
+            <div class="description-card">
+                <p>{{ comunidad.descripcion }}</p>
+            </div>
+
+            <!-- Miembros -->
+            <h2 class="section-title">👥 Miembros de la Comunidad</h2>
+            <div class="members-grid">
+                {% for miembro in comunidad.get_miembros_activos %}
+                    <div class="member-card">
+                        <div class="member-info">
+                            <div class="member-avatar">
+                                {{ miembro.usuario.first_name.0|default:"U"|upper }}
+                            </div>
+                            <div class="member-details">
+                                <h4>{{ miembro.usuario.get_full_name }}</h4>
+                                <span class="member-role">
+                                    {% if miembro.rol == 'profesor' %}
+                                        👨‍🏫 Profesor
+                                    {% else %}
+                                        🎓 Estudiante
+                                    {% endif %}
+                                    {% if miembro.usuario == comunidad.creador %}(Creador){% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    <div class="chat-container">
+        <div class="chat-section">
+            <h2 class="section-title">💬 Conversación de {{ comunidad.nombre }}</h2>
+            
+            <div id="connectionStatus" class="connection-status">
+                🟢 Conectado al chat
+            </div>
+            
+            {% if es_miembro %}
+                <div class="chat-content">
+                    <!-- Sidebar de miembros -->
+                    <div class="members-sidebar">
+                        <div class="members-title">
+                            👥 Miembros en línea (<span id="membersCount">0</span>)
+                        </div>
+                        <div id="membersList">
+                            <!-- Los miembros se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Chat principal -->
+                    <div class="chat-main">
+                        <div class="messages-container" id="messagesContainer">
+                            {% if mensajes %}
+                                {% for mensaje in mensajes %}
+                                    <div class="message {% if mensaje.autor == user %}own{% elif mensaje.tipo == 'sistema' %}system{% else %}other{% endif %}" data-message-id="{{ mensaje.id }}">
+                                        {% if mensaje.tipo != 'sistema' %}
+                                            <div class="message-header">
+                                                <span class="message-author">
+                                                    {{ mensaje.autor.nombres }} {{ mensaje.autor.apellidos }}
+                                                </span>
+                                                <span class="message-time">
+                                                    {{ mensaje.timestamp|date:"d/m/Y H:i" }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="message-content">
+                                            {{ mensaje.contenido|linebreaks }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty-messages" id="emptyMessages">
+                                    ✨ ¡Sé el primero en iniciar la conversación!
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                            Alguien está escribiendo...
+                        </div>
+                        
+                        <!-- Formulario de mensaje -->
+                        <form id="messageForm" class="message-form">
+                            {% csrf_token %}
+                            <textarea id="messageInput" name="contenido" class="message-input" 
+                                      placeholder="Escribe tu mensaje aquí..." 
+                                      rows="1" required></textarea>
+                            <button type="submit" class="btn-send" id="sendButton">
+                                📤 Enviar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="join-prompt">
+                    <h3 style="margin-bottom: 15px;">🔒 Únete a la Conversación</h3>
+                    <p style="margin-bottom: 20px;">
+                        Para participar en esta comunidad y acceder a los mensajes, 
+                        necesitas ser miembro.
+                    </p>
+                    <form method="post" action="{% url 'comunidad:unirse_conversacion' comunidad.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-join">
+                            🚪 Unirse a la conversación
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Notificaciones -->
+    <div id="notification" class="notification"></div>
+    
+    <script>
+        // Inicializar el chat si es miembro
+        {% if es_miembro %}
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatManager = new ChatManager({{ comunidad.id }}, {{ user.id }});
+            window.chatManager = chatManager; // Para debugging
+        });
+        {% endif %}
+    </script>
+
+    <!-- Mensajes de Django -->
+    {% if messages %}
+        <div style="position: fixed; top: 80px; right: 20px; z-index: 1000;">
+            {% for message in messages %}
+                <div style="background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 10px; 
+                            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); margin-bottom: 10px; 
+                            animation: slideIn 0.5s ease;">
+                    <strong>{{ message.tags|default:"Info" }}:</strong> {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        <style>
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    {% endif %}
+
+    <script src="{% static 'M6_Comunidades/comunidad_detalle/comunidad_detalle.js' %}"></script>    
+</body>
+</html>

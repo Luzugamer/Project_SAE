@@ -63,8 +63,10 @@
             <p>Guarda tu código secreto en un lugar seguro. Lo necesitarás si cambias de dispositivo.</p>
         </div>
 
-        <div class="setup-cancel">
-            <a href="#" onclick="history.back()">← Cancelar</a>
+        <div class="botones-container">
+            <button class="setup-cancel" onclick="window.location.href='{% url 'perfil_usuario' %}'">
+                <i class="fas fa-trash-alt"></i> Cancelar
+            </button>
         </div>
     </div>
 

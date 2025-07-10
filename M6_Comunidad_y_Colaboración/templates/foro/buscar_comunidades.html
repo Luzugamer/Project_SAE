@@ -1,0 +1,163 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Comunidades</title>
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/buscar_comunidades/buscar_comunidades.css' %}">
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+        <div class="floating-shape"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Explorar Comunidades</h1>
+            <p>Descubre comunidades académicas increíbles y únete a la conversación</p>
+            
+            <div class="search-container">
+                <form method="GET" class="search-form" id="searchForm">
+                    <input 
+                        type="text" 
+                        name="q" 
+                        class="search-input" 
+                        placeholder="¿Qué comunidad estás buscando?"
+                        value="{{ query }}"
+                        id="searchInput"
+                    >
+                    <button type="submit" class="search-button">
+                        <span>🚀</span>
+                        Buscar
+                    </button>
+                </form>
+            </div>
+
+        <!-- Estadísticas de búsqueda -->
+        {% if query %}
+        <div class="search-stats">
+            {% if resultados %}
+                🎯 Encontramos <strong>{{ resultados|length }}</strong> comunidad{{ resultados|length|pluralize:"es" }} 
+                para "<strong>{{ query }}</strong>"
+            {% else %}
+                😔 No encontramos resultados para "<strong>{{ query }}</strong>"
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Estado de carga -->
+        <div class="loading-state" id="loadingState">
+            <div class="loading-spinner"></div>
+            <p>Buscando las mejores comunidades para ti...</p>
+        </div>
+
+        <!-- Resultados -->
+        {% if resultados %}
+        <div class="results-grid" id="resultsGrid">
+            {% for comunidad in resultados %}
+            <div class="community-card fade-in {% if comunidad.es_destacada %}featured sparkle{% endif %}" 
+                 style="animation-delay: {{ forloop.counter0|floatformat:1 }}00ms;">
+                
+                <div class="card-header">
+                    <div class="card-header-content">
+                        <div class="community-icon">
+                            {% if comunidad.icono %}
+                                <img src="{{ comunidad.icono.url }}" alt="{{ comunidad.nombre }}">
+                            {% else %}
+                                🏛️
+                            {% endif %}
+                        </div>
+                        <h3 class="community-title">{{ comunidad.nombre }}</h3>
+                        {% if comunidad.institucion_afiliada %}
+                        <div class="community-institution">
+                            🏫 {{ comunidad.institucion_afiliada }}
+                        </div>
+                        {% endif %}
+                        <div class="community-stats">
+                            <div class="stat-item">
+                                <span>⭐</span>
+                                <span>{{ comunidad.puntos_prestigio }} pts</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>👥</span>
+                                <span>{{ comunidad.miembros.count }} miembros</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>📅</span>
+                                <span>{{ comunidad.fecha_creacion|date:"M Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <p class="community-description">
+                        {{ comunidad.descripcion|default:"Una comunidad increíble esperando por ti. ¡Únete y descubre todo lo que tiene para ofrecer!" }}
+                    </p>
+                    
+                    <div class="community-meta">
+                        <span>👨‍🏫 Por {{ comunidad.creador.get_full_name}}</span>
+                        <span>🕒 {{ comunidad.fecha_creacion|timesince }} atrás</span>
+                    </div>
+
+                    <!-- Verificar si ya es miembro -->
+                    {% if user in comunidad.miembros.all %}
+                        <a href="{% url 'comunidad:comunidad_detalle' comunidad.id %}" class="join-button" style="background: linear-gradient(135deg, #4299E1, #3182CE);">
+                            <span>👁️</span>
+                            Ya eres miembro - Ver comunidad
+                        </a>
+                    {% else %}
+                        <form method="POST" action="{% url 'comunidad:unirse_comunidad' comunidad.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="join-button" onclick="joinCommunity(this, '{{ comunidad.nombre }}')">
+                                <span>🚀</span>
+                                Unirse a {{ comunidad.nombre }}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% elif query %}
+        <!-- No hay resultados -->
+        <div class="no-results">
+            <h2>🔍 ¡Ups! No encontramos nada</h2>
+            <p>No encontramos comunidades que coincidan con "<strong>{{ query }}</strong>"</p>
+            <p>💡 <strong>Sugerencias:</strong></p>
+            <ul style="text-align: left; display: inline-block; margin: 20px 0;">
+                <li>Verifica la ortografía de tu búsqueda</li>
+                <li>Intenta con términos más generales</li>
+                <li>Usa palabras clave relacionadas</li>
+                <li>Explora nuestras categorías populares arriba</li>
+            </ul>
+            <div style="margin-top: 30px;">
+                <button onclick="clearSearch()" class="join-button" style="max-width: 300px; margin: 0 auto;">
+                    <span>🏠</span>
+                    Ver todas las comunidades
+                </button>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Estado inicial -->
+        <div class="no-results">
+            <h2>🌟 ¡Bienvenido al explorador!</h2>
+            <p>Usa la barra de búsqueda arriba o explora nuestras categorías populares</p>
+            <p>Encuentra la comunidad perfecta para tu aprendizaje</p>
+            <a href="{% url 'comunidad:inicio' %}" class="join-button" style="max-width: 300px; margin: 30px auto 0;">
+                <span>🏠</span>
+                Ver comunidades destacadas
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="{% static 'M6_Comunidades/buscar_comunidades/buscar_comunidades.js' %}"></script>    
+</body>
+</html>

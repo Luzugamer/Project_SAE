@@ -1,0 +1,199 @@
+{% extends "Paginas_Inicio/base.html" %}
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidades de Estudio</title>
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/inicio/inicio.css' %}">
+</head>
+<body>
+    <!-- Partículas flotantes -->
+    <div class="floating-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Botón toggle sidebar -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
+    <!-- Sidebar deslizable -->
+    <div class="sidebar" id="sidebar">
+        <h3>🌟 Todas las Comunidades</h3>
+        <div class="sidebar-comunidades">
+            {% for comunidad in todas_comunidades %}
+                <div class="sidebar-comunidad" 
+                    data-nombre="{{ comunidad.nombre|escapejs }}" 
+                    data-id="{{ comunidad.id }}"
+                    onclick="mostrarModal(this.dataset.nombre, this.dataset.id)">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="comunidad-icon">
+                            {% if comunidad.icono %}
+                                <img src="{{ comunidad.icono.url }}" alt="{{ comunidad.nombre }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                                🏫
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h4 style="margin: 0; color: #2c3e50;">{{ comunidad.nombre }}</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #666;">{{ comunidad.descripcion|truncatechars:50 }}</p>
+                            <small style="color: #888;">👥 {{ comunidad.miembros.count }} miembros</small>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p style="color: #666; text-align: center;">No hay comunidades disponibles</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header Principal -->
+        <div class="header">
+            <div class="welcome-image">🎓</div>
+            <h1>BIENVENIDO A LAS COMUNIDADES</h1>
+            <p>Conecta, aprende y colabora con estudiantes y profesores de todo el mundo</p>
+            <p style="font-size: 1rem; color: #555;">Únete a comunidades de estudio, participa en discusiones y expande tu conocimiento</p>
+        </div>
+
+        <!-- Navegación principal - Diferenciada por rol -->
+        <div class="nav-buttons">
+            {% if user.is_authenticated %}
+                <!-- Botones para profesores -->
+                {% if user.rol == 'profesor' %}
+                    <a href="{% url 'comunidad:crear_comunidad' %}" class="btn">
+                        ➕ Crear Comunidad
+                    </a>
+                    <a href="{% url 'comunidad:comunidad_gestion' %}" class="btn">
+                        👤 Mis Comunidades
+                    </a>
+                    <a href="{% url 'comunidad:buscar_comunidades' %}" class="btn">
+                        🔍 Buscar Comunidades
+                    </a>
+                {% else %}
+                    <!-- Botones para estudiantes -->
+                    <a href="{% url 'comunidad:mis_comunidades' %}" class="btn">
+                        👤 Ver Comunidades
+                    </a>
+                    <a href="{% url 'comunidad:buscar_comunidades' %}" class="btn">
+                        🔍 Buscar Comunidades
+                    </a>
+                    <a href="{% url 'comunidad:asistente_ia' %}" class="btn">
+                        🤖 Asistente IA
+                    </a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}" class="btn">
+                    🔐 Iniciar Sesión
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Sección de comunidades destacadas -->
+        <div class="featured-section">
+            <h2 class="section-title">🌟 Comunidades Destacadas</h2>
+            <div class="comunidades-grid">
+                {% for comunidad in comunidades_destacadas %}
+                    <div class="comunidad-card">
+                        <div class="comunidad-icon">
+                            {% if comunidad.icono %}
+                                <img src="{{ comunidad.icono.url }}" alt="{{ comunidad.nombre }}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                                🏫
+                            {% endif %}
+                        </div>
+                        <h3>{{ comunidad.nombre }}</h3>
+                        <p>{{ comunidad.descripcion|truncatechars:100 }}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <small style="color: #666;">
+                                👥 {{ comunidad.miembros.count }} miembros<br>
+                                ⭐ {{ comunidad.puntos_prestigio }} puntos
+                            </small>
+                            {% if user.is_authenticated %}
+                                <button class="btn" 
+                                        data-nombre="{{ comunidad.nombre|escapejs }}" 
+                                        data-id="{{ comunidad.id }}"
+                                        onclick="mostrarModal(this.dataset.nombre, this.dataset.id)" 
+                                        style="padding: 8px 15px; font-size: 0.9rem;">
+                                    Ver Más
+                                </button>
+                            {% else %}
+                                <a href="{% url 'login' %}" class="btn" style="padding: 8px 15px; font-size: 0.9rem;">
+                                    Iniciar Sesión
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <h3>No hay comunidades destacadas disponibles</h3>
+                        <p>¡Sé el primero en crear una comunidad!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="featured-section">
+            <h2 class="section-title">📚 ¿Cómo funciona?</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🔍</div>
+                    <h3 style="color: #2c3e50; margin-bottom: 10px;">Explora</h3>
+                    <p style="color: #666;">Busca y descubre comunidades que se ajusten a tus intereses académicos</p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🤝</div>
+                    <h3 style="color: #2c3e50; margin-bottom: 10px;">Conecta</h3>
+                    <p style="color: #666;">Únete a comunidades y conecta con estudiantes y profesores</p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">📖</div>
+                    <h3 style="color: #2c3e50; margin-bottom: 10px;">Aprende</h3>
+                    <p style="color: #666;">Participa en discusiones y comparte conocimiento</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal" id="joinModal">
+        <div class="modal-content">
+            <h3 style="color: #2c3e50;">¿Seguro que quieres unirte a esta comunidad?</h3>
+            <p id="modalCommunityName" style="font-weight: bold; color: #555; margin: 15px 0;"></p>
+            <p style="color: #666; font-size: 0.9rem;">Al unirte podrás participar en discusiones y acceder a contenido exclusivo.</p>
+            <div class="modal-buttons">
+                <button class="btn-confirm" onclick="confirmarUnion()">Sí, unirme</button>
+                <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón flotante Asistente IA -->
+    <div class="floating-ai" 
+        data-url="{% url 'comunidad:asistente_ia' %}"
+        onclick="window.location.href=this.dataset.url">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+        </svg>
+    </div>
+
+    <script src="{% static 'M6_Comunidades/inicio/inicio.js' %}"></script>    
+
+</body>
+</html>
+{% endblock %}

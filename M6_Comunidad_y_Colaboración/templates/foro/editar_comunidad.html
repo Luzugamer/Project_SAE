@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Comunidad - {{ comunidad.nombre }}</title>
+    <link rel="stylesheet" href="{% static 'M6_Comunidades/editar_comunidad/editar_comunidad.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>
+                <span class="icon">✏️</span>
+                Editar Comunidad
+            </h1>
+        </div>
+        
+        <!-- Mostrar mensajes de error o éxito -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <span class="alert-icon">
+                            {% if message.tags == 'success' %}✅{% else %}⚠️{% endif %}
+                        </span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="modern-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h2 class="section-title">
+                    <span class="section-icon">📝</span>
+                    Información Básica
+                </h2>
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre de la Comunidad:</label>
+                    <input type="text" id="nombre" name="nombre" value="{{ comunidad.nombre }}" required maxlength="100" class="form-input">
+                    {% if form.nombre.errors %}
+                        <div class="error">
+                            {{ form.nombre.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción:</label>
+                    <textarea id="descripcion" name="descripcion" rows="4" required class="form-input">{{ comunidad.descripcion }}</textarea>
+                    {% if form.descripcion.errors %}
+                        <div class="error">
+                            {{ form.descripcion.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="institucion_afiliada">Institución Afiliada:</label>
+                    <input type="text" id="institucion_afiliada" name="institucion_afiliada" 
+                           value="{{ comunidad.institucion_afiliada|default:'' }}" maxlength="200" class="form-input">
+                    <small>Campo opcional</small>
+                    {% if form.institucion_afiliada.errors %}
+                        <div class="error">
+                            {{ form.institucion_afiliada.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎨</span>
+                    Personalización Visual
+                </h2>
+                
+                <div class="form-group">
+                    <label for="icono">Icono de la Comunidad:</label>
+                    
+                    <!-- Mostrar icono actual si existe -->
+                    {% if comunidad.icono %}
+                        <div class="current-icon">
+                            <p>Icono actual:</p>
+                            <div class="icon-preview">
+                                <img src="{{ comunidad.icono.url }}" alt="Icono actual">
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="no-icon">
+                            <span class="no-icon-placeholder">📷</span>
+                            <p>No hay icono establecido</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="file-input-wrapper">
+                        <input type="file" id="icono" name="icono" accept="image/*" class="file-input">
+                        <label for="icono" class="file-input-label">
+                            <span class="file-icon">📁</span>
+                            Seleccionar archivo
+                        </label>
+                    </div>
+                    <small>Formatos soportados: JPG, PNG, GIF. Deja vacío si no quieres cambiar el icono.</small>
+                    {% if form.icono.errors %}
+                        <div class="error">
+                            {{ form.icono.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    Configuración Avanzada
+                </h2>
+                
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="es_destacada" {% if comunidad.es_destacada %}checked{% endif %} class="checkbox-input">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">
+                                <strong>Comunidad Destacada</strong>
+                                <small>Aparecerá en secciones destacadas</small>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="chat_activo" {% if comunidad.chat_activo %}checked{% endif %} class="checkbox-input">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">
+                                <strong>Chat Activo</strong>
+                                <small>Permite conversaciones en tiempo real</small>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="notificaciones_email" {% if comunidad.notificaciones_email %}checked{% endif %} class="checkbox-input">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">
+                                <strong>Notificaciones por Email</strong>
+                                <small>Recibe avisos importantes por correo</small>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email_notificacion">Email para Notificaciones (opcional):</label>
+                    <input type="email" id="email_notificacion" name="email_notificacion" 
+                           value="{{ comunidad.email_notificacion|default:'' }}" class="form-input">
+                    <small>Email personalizado para recibir notificaciones. Si está vacío, se usará el email del creador.</small>
+                    {% if form.email_notificacion.errors %}
+                        <div class="error">
+                            {{ form.email_notificacion.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información de solo lectura -->
+            <div class="readonly-info">
+                <h3>
+                    <span class="info-icon">📊</span>
+                    Información de la Comunidad
+                </h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Código de Invitación:</span>
+                        <span class="info-value code">{{ comunidad.codigo_invitacion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Creada por:</span>
+                        <span class="info-value">{{ comunidad.creador.get_full_name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Fecha de Creación:</span>
+                        <span class="info-value">{{ comunidad.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Puntos de Prestigio:</span>
+                        <span class="info-value badge">{{ comunidad.puntos_prestigio }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Miembros Activos:</span>
+                        <span class="info-value badge">{{ comunidad.get_miembros_activos.count }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-icon">💾</span>
+                    Guardar Cambios
+                </button>
+                <a href="{% url 'comunidad:comunidad_detalle' comunidad.id %}" class="btn btn-secondary">
+                    <span class="btn-icon">❌</span>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script src="{% static 'M6_Comunidades/editar_comunidad/editar_comunidad.js' %}"></script>    
+</body>
+</html>

@@ -10,18 +10,7 @@
     <div class="perfil-card">
         <!-- Sección superior -->
         <div class="perfil-header">
-            {% if user.foto_perfil %}
-                <img src="{{ user.foto_perfil.url }}" 
-                    class="perfil-foto" 
-                    alt="Foto de perfil" 
-                    id="perfilFoto"
-                    loading="lazy">
-            {% else %}
-                <img src="{% static 'img/avatar-default.png' %}" 
-                    class="perfil-foto" 
-                    alt="Foto de perfil" 
-                    id="perfilFoto">
-            {% endif %}
+            <img src="{{ perfil_url }}" class="perfil-foto" alt="Foto de perfil">
 
             <div class="perfil-info-basica">
                 <h1 class="perfil-apellido">{{ user.apellido }}</h1>                
@@ -441,22 +430,15 @@ function setupPhotoUpload() {
         return;
     }
 
-    // Limpiar event listeners previos
-    uploadArea.replaceWith(uploadArea.cloneNode(true));
-    photoInput.replaceWith(photoInput.cloneNode(true));
-    
-    // Obtener las nuevas referencias después del clonado
-    const newUploadArea = document.getElementById('uploadArea');
-    const newPhotoInput = document.getElementById('photoInput');
-    
     // Click en el área de upload
-    newUploadArea.addEventListener('click', (e) => {
-        e.preventDefault();
-        newPhotoInput.click();
+    uploadArea.addEventListener('click', (e) => {
+        if (e.target === uploadArea || e.target.closest('#uploadContent')) {
+            photoInput.click();
+        }
     });
     
     // Cambio en el input file
-    newPhotoInput.addEventListener('change', (e) => {
+    photoInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             if (validateFile(file)) {
@@ -466,22 +448,22 @@ function setupPhotoUpload() {
     });
     
     // Drag and drop events
-    newUploadArea.addEventListener('dragover', (e) => {
+    uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        newUploadArea.classList.add('drag-over');
+        uploadArea.classList.add('drag-over');
     });
     
-    newUploadArea.addEventListener('dragleave', (e) => {
+    uploadArea.addEventListener('dragleave', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        newUploadArea.classList.remove('drag-over');
+        uploadArea.classList.remove('drag-over');
     });
     
-    newUploadArea.addEventListener('drop', (e) => {
+    uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        newUploadArea.classList.remove('drag-over');
+        uploadArea.classList.remove('drag-over');
         
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -490,7 +472,7 @@ function setupPhotoUpload() {
                 // Asignar el archivo al input
                 const dt = new DataTransfer();
                 dt.items.add(file);
-                newPhotoInput.files = dt.files;
+                photoInput.files = dt.files;
                 previewPhoto(file);
             }
         }
@@ -519,13 +501,13 @@ function previewPhoto(file) {
     reader.onload = (e) => {
         const newPhotoPreview = document.getElementById('newPhotoPreview');
         const photoPreview = document.getElementById('photoPreview');
-        const uploadArea = document.getElementById('uploadArea');
+        const uploadContent = document.getElementById('uploadContent');
         const uploadBtn = document.getElementById('uploadPhotoBtn');
         
-        if (newPhotoPreview && photoPreview && uploadArea && uploadBtn) {
+        if (newPhotoPreview && photoPreview && uploadContent && uploadBtn) {
             newPhotoPreview.src = e.target.result;
             photoPreview.style.display = 'block';
-            uploadArea.style.display = 'none';
+            uploadContent.style.display = 'none';
             uploadBtn.disabled = false;
         }
     };
@@ -534,12 +516,12 @@ function previewPhoto(file) {
 
 function removePreview() {
     const photoPreview = document.getElementById('photoPreview');
-    const uploadArea = document.getElementById('uploadArea');
+    const uploadContent = document.getElementById('uploadContent');
     const photoInput = document.getElementById('photoInput');
     const uploadBtn = document.getElementById('uploadPhotoBtn');
     
     if (photoPreview) photoPreview.style.display = 'none';
-    if (uploadArea) uploadArea.style.display = 'block';
+    if (uploadContent) uploadContent.style.display = 'block';
     if (photoInput) photoInput.value = '';
     if (uploadBtn) uploadBtn.disabled = true;
 }
@@ -547,7 +529,6 @@ function removePreview() {
 async function uploadPhoto() {
     const input = document.getElementById('photoInput');
     const file = input?.files[0];
-    const spinner = document.getElementById('loading-spinner');
     const uploadBtn = document.getElementById('uploadPhotoBtn');
 
     if (!file) {
@@ -555,27 +536,20 @@ async function uploadPhoto() {
         return;
     }
 
-    // Validar archivo nuevamente antes de subir
-    if (!validateFile(file)) {
-        return;
-    }
-
     const formData = new FormData();
     formData.append('foto_perfil', file);
-    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-
-    // Mostrar spinner y deshabilitar botón
-    if (spinner) spinner.style.display = 'block';
-    if (uploadBtn) {
+    // Obtener el token CSRF de las cookies
+    const csrftoken = getCookie('csrftoken');
+    
+    try {
         uploadBtn.disabled = true;
         uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
-    }
 
-    try {
-        const response = await fetch('/subir-foto-perfil/', {
+        const response = await fetch('{% url "subir_foto_perfil" %}', {
             method: 'POST',
             body: formData,
             headers: {
+                'X-CSRFToken': csrftoken,
                 'X-Requested-With': 'XMLHttpRequest'
             }
         });
@@ -587,32 +561,41 @@ async function uploadPhoto() {
         const data = await response.json();
         
         if (data.success) {
-            // Actualizar todas las imágenes de perfil en la página
+            // Actualizar la imagen de perfil
             const profileImages = document.querySelectorAll('#perfilFoto, #currentPhotoPreview');
             profileImages.forEach(img => {
-                if (img) {
-                    // Agregar timestamp para evitar cache del navegador
-                    img.src = data.foto_url + '?t=' + new Date().getTime();
-                }
+                img.src = data.foto_url + '?t=' + new Date().getTime();
             });
             
-            showToast(data.message || 'Imagen actualizada correctamente', true);
+            showToast('Foto de perfil actualizada correctamente', true);
             closePhotoModal();
         } else {
-            throw new Error(data.message || 'Error desconocido al subir imagen');
+            throw new Error(data.message || 'Error al subir la imagen');
         }
     } catch (error) {
-        console.error('Error al subir imagen:', error);
-        showToast(error.message || 'Error al subir imagen', false);
+        console.error('Error:', error);
+        showToast(error.message || 'Error al subir la imagen', false);
     } finally {
-        // Ocultar spinner y restaurar botón
-        if (spinner) spinner.style.display = 'none';
-        if (uploadBtn) {
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = 'Subir Foto';
-        }
-        if (input) input.value = ''; // Limpiar input para permitir reseleccionar
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = 'Subir Foto';
+        input.value = '';
     }
+}
+
+// Función para obtener el token CSRF de las cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Función para mostrar notificaciones (si no la tienes ya)
@@ -772,38 +755,43 @@ function closeDeleteModal() {
 <!-- Modal de Cambio de Foto -->
 <div id="photoModal" class="modal">
     <div class="modal-content">
-        <form method="POST" enctype="multipart/form-data" action="{% url 'subir_foto_perfil' %}">
-            {% csrf_token %}
-            <div class="modal-header">
-                <h3>Cambiar Foto de Perfil</h3>
-                <button class="btn-close" type="button" onclick="closePhotoModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+        <div class="modal-header">
+            <h3>Cambiar Foto de Perfil</h3>
+            <button class="btn-close" type="button" onclick="closePhotoModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="photo-upload-container">
+            <div class="current-photo">
+                {% if user.foto_perfil %}
+                    <img src="{{ user.foto_perfil.url }}" alt="Foto actual" id="currentPhotoPreview">
+                {% else %}
+                    <img src="{% static 'img/avatar-default.png' %}" alt="Foto actual" id="currentPhotoPreview">
+                {% endif %}
             </div>
 
-            <div class="photo-upload-container">
-                <div class="current-photo">
-                    {% if user.foto_perfil %}
-                        <img src="{{ user.foto_perfil.url }}" alt="Foto actual" id="currentPhotoPreview">
-                    {% else %}
-                        <img src="{% static 'img/avatar-default.png' %}" alt="Foto actual" id="currentPhotoPreview">
-                    {% endif %}
+            <div class="upload-area" id="uploadArea">
+                <div id="photoPreview" style="display: none;">
+                    <img id="newPhotoPreview" src="" alt="Nueva foto de perfil" style="max-width: 200px; max-height: 200px; border-radius: 10px;">
+                    <button type="button" class="btn-remove-preview" onclick="removePreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-
-                <div class="upload-area">
-                    <input type="file" name="foto_perfil" accept="image/*" required>
+                <div id="uploadContent">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <p>Arrastra y suelta una imagen o haz clic para seleccionar</p>
+                    <input type="file" id="photoInput" accept="image/*" style="display: none;">
                     <small>Formatos permitidos: JPG, PNG, WebP, GIF (Máximo 5MB)</small>
                 </div>
             </div>
+        </div>
 
-            <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closePhotoModal()">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Subir Foto</button>
-            </div>
-        </form>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closePhotoModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="uploadPhotoBtn" onclick="uploadPhoto()" disabled>Subir Foto</button>
+        </div>
     </div>
 </div>
-
-
 
 {% endblock %}
