@@ -1,4 +1,4 @@
-// repositorio.js
+// repositorio_logic.js
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeRepository();
@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
 function initializeRepository() {
     setupSearch();
     setupUniversityCards();
-    addDynamicStyles();
     setupFilterOptions();
     setupFiltroToggle();
     setupFiltroAnimado();
@@ -25,16 +24,7 @@ function setupSearch() {
             applyCombinedFilters(e.target.value);
         }, 300);
     });
-
-    searchInput.addEventListener('focus', function () {
-        this.parentElement.classList.add('focused');
-    });
-
-    searchInput.addEventListener('blur', function () {
-        this.parentElement.classList.remove('focused');
-    });
 }
-
 
 function setupUniversityCards() {
     const tarjetas = document.querySelectorAll('.tarjeta:not(.tarjeta-agregar)');
@@ -77,32 +67,9 @@ function toggleUniversityCard(tarjeta) {
     }
 }
 
-function expandCard(tarjeta) {
-    const examenesContainer = tarjeta.querySelector('.examenes-container');
-    if (!examenesContainer) return;
-
-    tarjeta.classList.add('expanded');
-    requestAnimationFrame(() => {
-        const scrollHeight = examenesContainer.scrollHeight;
-        examenesContainer.style.maxHeight = scrollHeight + 'px';
-        examenesContainer.style.overflow = 'visible';
-    });
-}
-
-function collapseCard(tarjeta) {
-    const examenesContainer = tarjeta.querySelector('.examenes-container');
-    if (!examenesContainer) return;
-
-    const scrollHeight = examenesContainer.scrollHeight;
-
-    // Establece la altura explícitamente antes de ocultar para que funcione la transición
-    examenesContainer.style.maxHeight = scrollHeight + 'px';
-    examenesContainer.style.overflow = 'hidden';
-
-    requestAnimationFrame(() => {
-        tarjeta.classList.remove('expanded');
-        examenesContainer.style.maxHeight = '0px';
-    });
+function loadExamenes(universidadId, container) {
+    container.dataset.loaded = 'true';
+    console.log(`Cargando exámenes para universidad ${universidadId}`);
 }
 
 function mostrarFormulario(universidadId) {
@@ -113,40 +80,22 @@ function mostrarFormulario(universidadId) {
     const formElement = originalForm?.querySelector('form');
     const examenesList = tarjeta.querySelector('.examenes-list');
 
-    // Si ya está visible, ocultarlo con animación
     if (originalForm.style.display !== 'none') {
-        originalForm.style.opacity = '0';
-        setTimeout(() => {
-            originalForm.style.display = 'none';
-        }, 200);
+        hideForm(originalForm);
         return;
     }
 
-    // Reiniciar para modo crear
     formElement.reset();
     formElement.action = `/repositorio/universidad/${universidadId}/add-examen/`;
     formElement.querySelector('input[name="examen_id"]').value = '';
     formElement.querySelector('button[type="submit"]').textContent = 'Subir';
 
-    // Mover el formulario al principio de la lista
     if (examenesList.firstChild) {
         examenesList.insertBefore(originalForm, examenesList.firstChild);
     }
 
-    originalForm.style.display = 'block';
-    originalForm.style.opacity = '0';
-    setTimeout(() => {
-        originalForm.style.opacity = '1';
-    }, 50);
-
+    showForm(originalForm);
     expandCard(tarjeta);
-
-    setTimeout(() => {
-        const container = tarjeta.querySelector('.examenes-container');
-        if (container && tarjeta.classList.contains('expanded')) {
-            container.style.maxHeight = container.scrollHeight + 'px';
-        }
-    }, 100);
 }
 
 function editarExamen(universidadId, examenId, nombre, fecha) {
@@ -161,18 +110,10 @@ function editarExamen(universidadId, examenId, nombre, fecha) {
     const isEditingSame = inputHiddenId?.value === examenId;
 
     if (originalForm.style.display !== 'none' && isEditingSame) {
-        originalForm.style.opacity = '0';
-        setTimeout(() => {
-            originalForm.style.display = 'none';
-            formElement.reset();
-            formElement.action = `/repositorio/universidad/${universidadId}/add-examen/`;
-            inputHiddenId.value = '';
-            formElement.querySelector('button[type="submit"]').textContent = 'Subir';
-        }, 200);
+        hideForm(originalForm);
         return;
     }
 
-    // Llenar valores
     formElement.action = `/repositorio/examen/${examenId}/editar/`;
     inputHiddenId.value = examenId;
     formElement.querySelector('input[name="nombre"]').value = nombre;
@@ -182,27 +123,14 @@ function editarExamen(universidadId, examenId, nombre, fecha) {
 
     formElement.querySelector('button[type="submit"]').textContent = 'Actualizar';
 
-    // Insertar el formulario justo después del examen a editar
     const examenItem = tarjeta.querySelector(`.examen-item button[data-examen-id="${examenId}"]`)?.closest('.examen-item');
     if (examenItem && examenItem.nextSibling) {
         examenItem.parentNode.insertBefore(originalForm, examenItem.nextSibling);
     }
 
-    originalForm.style.display = 'block';
-    originalForm.style.opacity = '0';
-
+    showForm(originalForm);
     expandCard(tarjeta);
-
-    setTimeout(() => {
-        originalForm.style.opacity = '1';
-        const container = tarjeta.querySelector('.examenes-container');
-        if (container) {
-            container.style.maxHeight = container.scrollHeight + 'px';
-        }
-    }, 100);
 }
-
-
 
 function editarExamenDesdeDataset(button) {
     const universidadId = button.dataset.universidadId;
@@ -211,83 +139,6 @@ function editarExamenDesdeDataset(button) {
     const fecha = button.dataset.fecha;
 
     editarExamen(universidadId, examenId, nombre, fecha);
-}
-
-function loadExamenes(universidadId, container) {
-    container.dataset.loaded = 'true';
-    console.log(`Cargando exámenes para universidad ${universidadId}`);
-}
-
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
-function addDynamicStyles() {
-    const additionalStyles = `
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-        .notification.show {
-            transform: translateX(0);
-        }
-        .notification-success { background: #4CAF50; }
-        .notification-error { background: #f44336; }
-        .search-container.focused input {
-            box-shadow: 0 8px 25px rgba(126, 212, 173, 0.3);
-        }
-        .btn-cancel {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        .formulario-examen {
-            transition: all 0.3s ease;
-        }
-        .tarjeta .examenes-container {
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            max-height: 0;
-            overflow: hidden;
-        }
-        .tarjeta.expanded .examenes-container {
-            overflow: visible;
-        }
-    `;
-
-    if (!document.getElementById('repositorio-dynamic-styles')) {
-        const styleSheet = document.createElement('style');
-        styleSheet.id = 'repositorio-dynamic-styles';
-        styleSheet.textContent = additionalStyles;
-        document.head.appendChild(styleSheet);
-    }
 }
 
 function confirmarEliminarExamen(examenId) {
@@ -305,7 +156,7 @@ function confirmarEliminarExamen(examenId) {
         })
         .then(() => {
             showNotification('Examen eliminado');
-            location.reload(); // o eliminarlo del DOM si no quieres recargar
+            location.reload();
         })
         .catch(err => {
             console.error(err);
@@ -313,7 +164,6 @@ function confirmarEliminarExamen(examenId) {
         });
     });
 }
-
 
 function confirmarEliminarRepositorio(universidadId) {
     mostrarModal("¿Seguro que quiere eliminar este repositorio? Esta acción no se puede deshacer.", () => {
@@ -327,7 +177,7 @@ function confirmarEliminarRepositorio(universidadId) {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({}) // Envía un objeto vacío como body
+            body: JSON.stringify({})
         })
         .then(response => {
             if (!response.ok) {
@@ -336,14 +186,9 @@ function confirmarEliminarRepositorio(universidadId) {
             return response.json();
         })
         .then(data => {
-            if (data.status === 'success') {
+            if (data.success) {
                 showNotification(data.message, 'success');
-                // Eliminar la tarjeta del DOM con animación
-                const tarjeta = document.querySelector(`.tarjeta[data-universidad-id="${universidadId}"]`);
-                tarjeta.style.transition = 'all 0.3s ease';
-                tarjeta.style.opacity = '0';
-                tarjeta.style.transform = 'translateX(100px)';
-                setTimeout(() => tarjeta.remove(), 300);
+                removeUniversityCard(universidadId);
             } else {
                 throw new Error(data.message || 'Error al eliminar');
             }
@@ -370,19 +215,17 @@ function mostrarModal(mensaje, callbackConfirmar) {
     }
 
     mensajeElem.textContent = mensaje;
-    modal.style.display = 'flex';
+    showModal(modal);
 
-    // Eliminar eventos anteriores para evitar múltiples ejecuciones
     btnConfirmar.onclick = () => {
-        modal.style.display = 'none';
+        hideModal(modal);
         callbackConfirmar();
     };
 
     btnCancelar.onclick = () => {
-        modal.style.display = 'none';
+        hideModal(modal);
     };
 }
-
 
 function abrirModalConFormulario(url) {
     fetch(url)
@@ -394,7 +237,7 @@ function abrirModalConFormulario(url) {
             const modal = document.getElementById('modal-formulario');
             const contenido = document.getElementById('modal-formulario-body');
             contenido.innerHTML = html;
-            modal.style.display = 'flex';
+            showModal(modal);
         })
         .catch(error => {
             alert('Error al cargar el formulario');
@@ -406,7 +249,7 @@ function cerrarModalFormulario() {
     const modal = document.getElementById('modal-formulario');
     const contenido = document.getElementById('modal-formulario-body');
     contenido.innerHTML = '';
-    modal.style.display = 'none';
+    hideModal(modal);
 }
 
 function setupFilterOptions() {
@@ -414,33 +257,29 @@ function setupFilterOptions() {
     const toggleBtn = document.getElementById('toggle-opciones');
     const filtros = document.getElementById('contenedor-filtros');
 
+    if (!filtroContenedor || !toggleBtn || !filtros) return;
+
     filtroContenedor.style.display = 'block';
 
     toggleBtn.addEventListener('click', () => {
         filtros.style.display = filtros.style.display === 'none' ? 'flex' : 'none';
     });
 
-    // Extraer valores únicos desde las tarjetas
     const tarjetas = document.querySelectorAll('.tarjeta:not(.tarjeta-agregar)');
     const paises = new Set();
-    const especialidades = new Set();
     const tipos = new Set();
 
     tarjetas.forEach(t => {
         paises.add(t.querySelector('.pais')?.textContent.trim());
-        especialidades.add(t.querySelector('.especialidad')?.textContent.trim());
         tipos.add(t.querySelector('.tipo-solucionario')?.textContent.trim());
     });
 
     fillSelect('filtro-pais', paises);
-    fillSelect('filtro-especialidad', especialidades);
     fillSelect('filtro-tipo', tipos);
 
     document.getElementById('filtro-pais').addEventListener('change', applyCombinedFilters);
-    document.getElementById('filtro-especialidad').addEventListener('change', applyCombinedFilters);
     document.getElementById('filtro-tipo').addEventListener('change', applyCombinedFilters);
     document.getElementById('check-pais').addEventListener('change', applyCombinedFilters);
-    document.getElementById('check-especialidad').addEventListener('change', applyCombinedFilters);
     document.getElementById('check-tipo').addEventListener('change', applyCombinedFilters);
 }
 
@@ -461,22 +300,18 @@ function applyCombinedFilters() {
     const tarjetas = document.querySelectorAll('.tarjeta:not(.tarjeta-agregar)');
 
     const checkPais = document.getElementById('check-pais').checked;
-    const checkEspecialidad = document.getElementById('check-especialidad').checked;
     const checkTipo = document.getElementById('check-tipo').checked;
 
     const valPais = document.getElementById('filtro-pais').value;
-    const valEsp = document.getElementById('filtro-especialidad').value;
     const valTipo = document.getElementById('filtro-tipo').value;
 
     tarjetas.forEach(tarjeta => {
         const nombre = tarjeta.querySelector('h3')?.textContent.toLowerCase() || '';
         const pais = tarjeta.querySelector('.pais')?.textContent.toLowerCase() || '';
-        const esp = tarjeta.querySelector('.especialidad')?.textContent.toLowerCase() || '';
         const tipo = tarjeta.querySelector('.tipo-solucionario')?.textContent.toLowerCase() || '';
 
         const matchTexto = nombre.includes(term) || pais.includes(term) || esp.includes(term) || tipo.includes(term);
         const matchPais = !checkPais || (valPais && pais === valPais.toLowerCase());
-        const matchEsp = !checkEspecialidad || (valEsp && esp === valEsp.toLowerCase());
         const matchTipo = !checkTipo || (valTipo && tipo === valTipo.toLowerCase());
 
         if (matchTexto && matchPais && matchEsp && matchTipo) {
@@ -505,75 +340,11 @@ function setupFiltroAnimado() {
 
     if (boton && contenedor) {
         boton.addEventListener('click', () => {
-            contenedor.classList.toggle('show');   // activa animación contenedor
-            boton.classList.toggle('open');        // opcional: animación botón
+            contenedor.classList.toggle('show');
+            boton.classList.toggle('open');
         });
     }
 }
-
-
-
-// Cerrar vista previa al hacer clic fuera
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.examen-item') && !e.target.closest('.pdf-preview-container')) {
-        document.querySelectorAll('.pdf-preview-container').forEach(container => {
-            container.classList.remove('active');
-        });
-    }
-});
-
-// Mejorar la animación de los filtros
-function setupFiltroAnimado() {
-    const boton = document.getElementById('toggle-opciones');
-    const contenedor = document.getElementById('contenedor-filtros');
-
-    if (boton && contenedor) {
-        boton.addEventListener('click', () => {
-            if (contenedor.classList.contains('show')) {
-                contenedor.classList.remove('show');
-                setTimeout(() => {
-                    contenedor.style.display = 'none';
-                }, 300);
-            } else {
-                contenedor.style.display = 'flex';
-                setTimeout(() => {
-                    contenedor.classList.add('show');
-                }, 10);
-            }
-            boton.classList.toggle('active');
-        });
-    }
-}
-
-function editarExamenDesdeDataset(button) {
-    // Agregar clase de animación
-    button.classList.add('clicked');
-    
-    // Eliminar la clase después de la animación
-    setTimeout(() => {
-        button.classList.remove('clicked');
-    }, 300);
-    
-    // Resto de tu código existente...
-    const universidadId = button.dataset.universidadId;
-    const examenId = button.dataset.examenId;
-    const nombre = button.dataset.nombre;
-    const fecha = button.dataset.fecha;
-    
-    editarExamen(universidadId, examenId, nombre, fecha);
-}
-
-document.querySelectorAll('.btn-editar-repositorio').forEach(btn => {
-    btn.addEventListener('click', function() {
-        this.classList.add('loading');
-        // Remover la clase después de 2 segundos (solo para demo)
-        setTimeout(() => {
-            this.classList.remove('loading');
-        }, 2000);
-    });
-});
-
-
 
 window.mostrarFormulario = mostrarFormulario;
 window.editarExamen = editarExamen;
@@ -582,3 +353,4 @@ window.confirmarEliminarRepositorio = confirmarEliminarRepositorio;
 window.abrirModalConFormulario = abrirModalConFormulario;
 window.cerrarModalFormulario = cerrarModalFormulario;
 window.showNotification = showNotification;
+window.editarExamenDesdeDataset = editarExamenDesdeDataset;

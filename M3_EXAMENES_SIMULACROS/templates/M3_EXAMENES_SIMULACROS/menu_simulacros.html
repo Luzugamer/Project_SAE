@@ -2,37 +2,30 @@
 {% load static %}
 {% block content %}
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Simulacros y Evaluaciones</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'M3_EXAMENES_SIMULACROS/css/menu_simulacros.css' %}">
-</head>
-<body>
-    <div class="container">
-        <!-- Simulacros de Admisión -->
-        <div class="card">
-            <img src="{% static 'M3_EXAMENES_SIMULACROS/images/simulacro_admision.png' %}" alt="Simulacros de Admisión">
-            <div class="title">SIMULACROS DE EXÁMENES DE ADMISIÓN</div>
-            <a href="{% url 'simulacro_individual' %}" class="button">INICIAR</a>
-        </div>
+<title>Simulacros y Evaluaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'M3_EXAMENES_SIMULACROS/css/menu_simulacros.css' %}">
 
-        <!-- Evaluaciones Conjuntas -->
-        <div class="card">
-            <img src="{% static 'M3_EXAMENES_SIMULACROS/images/evaluacion_conjunta.png' %}" alt="Evaluaciones Conjuntas">
-            <div class="title">EVALUACIONES CONJUNTAS</div>
-            <a href="{% url 'simulacro_grupal' %}" class="button">INICIAR</a>
-        </div>
-
-        <!-- Evaluaciones Especiales -->
-        <div class="card">
-            <img src="{% static 'M3_EXAMENES_SIMULACROS/images/evaluacion_especial.png' %}" alt="Evaluaciones Especiales">
-            <div class="title">EVALUACIONES ESPECIALES</div>
-            <a href="#" class="button">INICIAR</a>
-        </div>
+<div class="container">
+    <!-- Simulacros de Admisión -->
+    <div class="card">
+        <img src="{% static 'M3_EXAMENES_SIMULACROS/images/simulacro_admision.png' %}" alt="Simulacros de Admisión">
+        <div class="title">SIMULACROS DE EXÁMENES DE ADMISIÓN</div>
+        <a href="{% url 'simulacro_individual' %}" class="button">INICIAR</a>
     </div>
-</body>
-</html>
+
+    <!-- Evaluaciones Conjuntas -->
+    <div class="card">
+        <img src="{% static 'M3_EXAMENES_SIMULACROS/images/evaluacion_conjunta.png' %}" alt="Evaluaciones Conjuntas">
+        <div class="title">EVALUACIONES CONJUNTAS</div>
+        <a href="{% url 'simulacro_grupal' %}" class="button">INICIAR</a>
+    </div>
+
+    <!-- Evaluaciones Especiales -->
+    <div class="card">
+        <img src="{% static 'M3_EXAMENES_SIMULACROS/images/evaluacion_especial.png' %}" alt="Evaluaciones Especiales">
+        <div class="title">EVALUACIONES ESPECIALES</div>
+        <a href="#" class="button">INICIAR</a>
+    </div>
+</div>
 {% endblock %}

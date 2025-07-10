@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
+
 class UsuarioManager(BaseUserManager):
     def create_user(self, correo_electronico, nombre, apellido, password=None, **extra_fields):
         if not correo_electronico:
@@ -46,6 +47,13 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     ultima_sesion = models.DateTimeField(null=True, blank=True)
     cierre_sesion = models.DateTimeField(null=True, blank=True)
     
+    # NUEVOS CAMPOS PARA DOCENTES
+    codigo_modular = models.CharField(max_length=10, null=True, blank=True)
+    institucion_educativa = models.CharField(max_length=255, null=True, blank=True)
+    departamento = models.CharField(max_length=100, null=True, blank=True)
+    provincia = models.CharField(max_length=100, null=True, blank=True)
+    distrito = models.CharField(max_length=100, null=True, blank=True)
+
     USERNAME_FIELD = 'correo_electronico'
     REQUIRED_FIELDS = ['nombre', 'apellido']
 

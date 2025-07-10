@@ -2,6 +2,8 @@
 {% load static %}
 {% block content %}
 
+<script src="{% static 'repositorio/repositorio_ui.js' %}"></script>
+<script src="{% static 'repositorio/repositorio_logic.js' %}"></script>
 <link rel="stylesheet" href="{% static 'repositorio/repositorio.css' %}">
 
 <h1>Almacen de Repositorios</h1>
@@ -25,11 +27,7 @@
 
             <div class="filtro-item">
                 <label>
-                    <select id="filtro-especialidad" class="select-filtro">
-                        <option value="">Seleccionar especialidad</option>
-                    </select>
-                    <input type="checkbox" id="check-especialidad">
-                    <span>Especialidad</span>
+
                 </label>
             </div>
 
@@ -37,6 +35,9 @@
                 <label>
                     <select id="filtro-tipo" class="select-filtro">
                         <option value="">Seleccionar tipo</option>
+                        {% for value, label in tipos_solucionario %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
                     </select>
                     <input type="checkbox" id="check-tipo">
                     <span>Tipo</span>
@@ -55,9 +56,10 @@
                 <div class="universidad-info">
                         <h3>{{ universidad.nombre }}</h3>
                         <div class="detalle-universidad">
-                            <span class="pais">{{ universidad.pais|default:"Perú" }}</span>
-                            <span class="especialidad">{{ universidad.especialidad }}</span>
+                            <span class="pais">{{ universidad.get_pais_display|default:"Perú" }}</span>
                             <span class="tipo-solucionario">{{ universidad.get_tipo_solucionario_display }}</span>
+                            <span class="institucion">{{ universidad.institucion_educativa }}</span>
+                            <span class="ubicacion">{{ universidad.departamento }}, {{ universidad.provincia }}</span>
                         </div>
                 </div>
                 <div class="expand-indicator"></div>
@@ -65,7 +67,8 @@
 
             <div class="examenes-container">
                 <div class="examenes-list">
-                        {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+                        {% with user.usuariorol_set.first as relacion %}
+                        {% if user.is_authenticated and relacion and relacion.rol.nombre_rol == 'profesor' %}
                         <div class="examen-item agregar-examen" onclick="mostrarFormulario('{{ universidad.id|escapejs }}')">
                             <div class="examen-icon">+</div>
                             <div class="examen-info">
@@ -73,6 +76,7 @@
                             </div>
                         </div>
                         {% endif %}
+                        {% endwith %}
                     {% for examen in universidad.examenes.all %}
                         
                         
@@ -90,8 +94,8 @@
                                 <div class="examen-actions">
                                     <a href="{{ examen.archivo.url }}" download class="descargar-link">📥 Descargar</a>
                                     
-                                    
-                                    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+                                    {% with user.usuariorol_set.first as relacion %}
+                                    {% if user.is_authenticated and relacion and relacion.rol.nombre_rol == 'profesor' %}
                                         <button type="button"
                                                 class="btn-editar"
                                                 data-universidad-id="{{ universidad.id }}"
@@ -104,6 +108,7 @@
                                         </button>
                                         <button type="button" class="btn-eliminar" onclick="confirmarEliminarExamen('{{ examen.id }}')">🗑️ </button>
                                     {% endif %}
+                                    {% endwith %}
                                 </div>
                             </div>
                             
@@ -114,8 +119,8 @@
                     {% empty %}
                         <p class="no-examenes">No hay exámenes disponibles.</p>
                     {% endfor %}
-
-                    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+                    {% with user.usuariorol_set.first as relacion %}
+                    {% if user.is_authenticated and relacion and relacion.rol.nombre_rol == 'profesor' %}
                         
 
                         <div class="repositorio-actions">
@@ -162,6 +167,7 @@
                         
                         <div id="modal-contenedor" class="modal" style="display: none;"></div>
                     {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>
@@ -170,14 +176,22 @@
             No hay universidades registradas.
         </p>
     {% endfor %}
-
-    {% if user.is_authenticated and user.usuariorol_set.first.rol.nombre_rol == 'profesor' %}
+    {% with user.usuariorol_set.first as relacion %}
+    {% if user.is_authenticated and relacion and relacion.rol.nombre_rol == 'profesor' %}
         <div class="tarjeta tarjeta-agregar">
-            <a href="{% url 'add_universidad' %}" style="text-decoration: none; color: inherit;">
+            <a href="{% url 'add_universidad_admision' %}" style="text-decoration: none; color: inherit;">
                 <div class="icono-mas">+</div>
                 <p class="agregar-texto">Agregar un repositorio de exámenes de admisión</p>
             </a>
         </div>
+
+        <div class="tarjeta tarjeta-agregar">
+            <a href="{% url 'add_solucionario_general' %}" style="text-decoration: none; color: inherit;">
+                <div class="icono-mas">+</div>
+                <p class="agregar-texto">Agregar un solucionario general o de ejercicios</p>
+            </a>
+        </div>
+
 
         <div id="modal-formulario" class="modal" style="display:none;">
             <div class="modal-content" id="modal-formulario-contenido">
@@ -196,9 +210,10 @@
             </div>
         </div>
     {% endif %}
+    {% endwith %}
 </div>
 
-<script src="{% static 'repositorio/repositorio.js' %}"></script>
+
 <script>
     window.csrfToken = '{{ csrf_token }}';
     document.body.dataset.userRole = '{% if user.is_authenticated %}{{ user.usuariorol_set.first.rol.nombre_rol }}{% endif %}';

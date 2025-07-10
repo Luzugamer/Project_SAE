@@ -1,0 +1,318 @@
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.contrib import messages
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Universidad, Examen
+from .forms import UniversidadForm, ExamenForm
+from django.db.models import Q
+from Login.models import Usuario
+from Login.models import UsuarioRol
+from django.core.files.base import ContentFile
+from django.utils import timezone
+import base64
+import uuid
+
+def tiene_permiso_profesor_sobre(usuario, universidad):
+    return (
+        UsuarioRol.objects.filter(usuario=usuario, rol__nombre_rol='profesor').exists() and (
+            usuario == universidad.profesor_creador or (
+                usuario.codigo_modular == universidad.codigo_modular and
+                usuario.institucion_educativa == universidad.institucion_educativa
+            )
+        )
+    )
+
+def vista_repositorio(request):
+    queryset = Universidad.objects.all().select_related('profesor_creador')
+    
+    # Filtrado por institución del docente
+    if request.user.is_authenticated and getattr(request.user, 'rol', None) == 'profesor':
+        queryset = queryset.filter(
+        codigo_modular=request.user.codigo_modular,
+        institucion_educativa=request.user.institucion_educativa
+    )
+    
+    # Filtros adicionales desde GET parameters
+    institucion_filter = request.GET.get('institucion')
+    tipo_filter = request.GET.get('tipo_solucionario')
+    
+    if institucion_filter or tipo_filter:
+        filtro = {}
+        if institucion_filter:
+            filtro['institucion_educativa__iexact'] = institucion_filter
+        if tipo_filter:
+            filtro['tipo_solucionario'] = tipo_filter
+        queryset = queryset.filter(**filtro)
+
+    context = {
+        'universidades': queryset,
+        'instituciones': Universidad.objects.exclude(institucion_educativa__isnull=True)
+                             .values_list('institucion_educativa', flat=True)
+                             .distinct(),
+        'tipos_solucionario': Universidad.TIPO_SOLUCIONARIO_CHOICES
+    }
+    return render(request, 'repositorio/repositorio.html', context)
+
+def add_universidad(request):
+    if not request.user.is_authenticated or not UsuarioRol.objects.filter(usuario=request.user, rol__nombre_rol='profesor').exists():
+        return redirect('repositorio')
+
+    if request.method == 'POST':
+        form = UniversidadForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            universidad = form.save(commit=False)
+            universidad.profesor_creador = request.user
+
+            # AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                if request.POST.get('confirm_save') == 'true':
+                    universidad.save()
+                    return JsonResponse({
+                        'success': True,
+                        'redirect': True,
+                        'add_another': request.POST.get('add_another') == 'true'
+                    })
+                
+                universidad.save()
+                return JsonResponse({
+                    'success': True,
+                    'preview': True,
+                    'is_edit': form.instance.pk is not None,
+                    'nombre': universidad.nombre,
+                    'pais': universidad.get_pais_display(),
+                    'tipo_solucionario': universidad.get_tipo_solucionario_display(),
+                    'logo_url': universidad.logo.url if universidad.logo else '',
+                })
+
+            universidad.save()
+            return redirect('repositorio')
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            }, status=400)
+
+    initial_data = {
+        'codigo_modular': request.user.codigo_modular,
+        'institucion_educativa': request.user.institucion_educativa,
+        'departamento': request.user.departamento,
+        'provincia': request.user.provincia,
+        'distrito': request.user.distrito,
+    }
+    form = UniversidadForm(user=request.user, initial=initial_data)
+    return render(request, 'repositorio/add_universidad.html', {'form': form})
+
+
+
+def vista_examenes_universidad(request, universidad_id):
+    return redirect('repositorio')
+
+def editar_universidad(request, universidad_id):
+    universidad = get_object_or_404(Universidad, id=universidad_id)
+
+    # Verificar permisos
+    if not tiene_permiso_profesor_sobre(request.user, universidad):
+        mensaje = 'No tienes permisos para editar esta universidad.'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'error': mensaje}, status=403)
+        messages.error(request, mensaje)
+        return redirect('repositorio')
+
+    if request.method == 'POST':
+        form = UniversidadForm(request.POST, request.FILES, instance=universidad, user=request.user)
+        
+        if form.is_valid():
+            universidad = form.save()
+
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Actualización exitosa'
+                })
+
+            messages.success(request, 'Repositorio actualizado correctamente')
+            return redirect('repositorio')
+
+        # Errores de validación
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            }, status=400)
+
+    else:
+        form = UniversidadForm(instance=universidad, user=request.user)
+
+    return render(request, 'repositorio/add_universidad.html', {
+        'form': form,
+        'universidad': universidad,
+        'editing': True
+    })
+
+
+
+def examenes_ajax(request, universidad_id):
+    universidad = get_object_or_404(Universidad, id=universidad_id)
+    examenes = universidad.examenes.all()
+
+    examenes_data = [
+        {
+            'id': examen.id,
+            'nombre': examen.nombre,
+            'fecha': str(examen.fecha),
+            'archivo': examen.archivo.url if examen.archivo else ''
+        }
+        for examen in examenes
+    ]
+
+    return JsonResponse({'examenes': examenes_data})
+
+
+def add_examen(request, universidad_id):
+    universidad = get_object_or_404(Universidad, id=universidad_id)
+
+    # Verificación de permisos
+    if not tiene_permiso_profesor_sobre(request.user, universidad):
+        mensaje = {'error': 'Acceso no autorizado'}
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse(mensaje, status=403)
+        return redirect('repositorio')
+
+    if request.method == 'POST':
+        form = ExamenForm(request.POST, request.FILES)
+        if form.is_valid():
+            examen = form.save(commit=False)
+            examen.universidad = universidad
+            examen.codigo_modular = universidad.codigo_modular
+
+            try:
+                examen.save()
+
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Examen agregado exitosamente',
+                        'examen_id': examen.id,
+                    })
+
+                messages.success(request, 'Examen agregado correctamente')
+                return redirect('vista_examenes_universidad', universidad_id=universidad.id)
+
+            except Exception as e:
+                mensaje_error = str(e)
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': mensaje_error}, status=500)
+                messages.error(request, f"Error al guardar: {mensaje_error}")
+
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
+    else:
+        form = ExamenForm(initial={'fecha': timezone.now().strftime('%Y-%m-%d')})
+
+    # Renderizar plantilla según tipo de petición
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'repositorio/form_fragmento.html', {
+            'form': form,
+            'form_action': reverse('add_examen', args=[universidad.id])
+        })
+
+    return render(request, 'repositorio/examenes_por_universidad.html', {
+        'universidad': universidad,
+        'form': form,
+        'mostrar_formulario': True
+    })
+
+def editar_examen(request, examen_id):
+    examen = get_object_or_404(Examen, id=examen_id)
+
+    # Verificación de permisos
+    universidad = examen.universidad
+    if not tiene_permiso_profesor_sobre(request.user, universidad):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'No tienes permisos para editar este examen'}, status=403)
+        messages.error(request, 'No tienes permisos para editar este examen.')
+        return redirect('repositorio')
+
+    form = ExamenForm(request.POST or None, request.FILES or None, instance=examen)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Examen actualizado correctamente'})
+            messages.success(request, 'Examen actualizado correctamente.')
+            return redirect('repositorio')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'repositorio/form_fragmento.html', {
+            'form': form,
+            'form_action': reverse('editar_examen', args=[examen.id])
+        })
+
+    return render(request, 'repositorio/editar_examen.html', {
+        'form': form,
+        'examen': examen
+    })
+
+def eliminar_examen(request, examen_id):
+    examen = get_object_or_404(Examen, id=examen_id)
+    universidad = examen.universidad
+
+    # Verificación de permisos
+    if not tiene_permiso_profesor_sobre(request.user, universidad):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'No tienes permisos para eliminar este examen'}, status=403)
+        messages.error(request, 'No tienes permisos para eliminar este examen.')
+        return redirect('repositorio')
+
+    try:
+        examen.delete()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Examen eliminado correctamente'})
+        messages.success(request, 'Examen eliminado correctamente.')
+        return redirect('repositorio')
+    except Exception as e:
+        error_msg = f"Error al eliminar el examen: {str(e)}"
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': error_msg}, status=500)
+        messages.error(request, error_msg)
+        return redirect('repositorio')
+
+def eliminar_universidad(request, universidad_id):
+    universidad = get_object_or_404(Universidad, id=universidad_id)
+
+    # Verificación de permisos
+    if not tiene_permiso_profesor_sobre(request.user, universidad):
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'No tienes permisos para eliminar este repositorio.'
+            }, status=403)
+        messages.error(request, 'No tienes permisos para eliminar este repositorio.')
+        return redirect('repositorio')
+
+    try:
+        universidad.delete()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Repositorio eliminado correctamente.',
+                'redirect_url': reverse('repositorio')
+            })
+        messages.success(request, 'Repositorio eliminado correctamente.')
+        return redirect('repositorio')
+    except Exception as e:
+        error_msg = f"Error al eliminar el repositorio: {str(e)}"
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': error_msg}, status=500)
+        messages.error(request, error_msg)
+        return redirect('repositorio')

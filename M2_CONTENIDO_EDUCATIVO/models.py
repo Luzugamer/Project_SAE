@@ -1,8 +1,12 @@
 from django.db import models
+from Login.models import Usuario
+from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from pdf2image import convert_from_bytes
 from io import BytesIO
 from PIL import Image
+from django.utils import timezone
 import os
 
 # Lista de países ordenados alfabéticamente
@@ -200,21 +204,69 @@ PAISES_CHOICES = [
     ('ZW', 'Zimbabue'),
 ]
 
-TIPO_SOLUCIONARIO_CHOICES = [
-    ('admision', 'Solucionario de Examen de Admisión'),
-    ('ejercicios', 'Solucionario de Ejercicios'),
-    ('otro', 'Otro'),
-]
 
 class Universidad(models.Model):
+    TIPO_SOLUCIONARIO_CHOICES = [
+        ('admision', 'Solucionario de Examen de Admisión'),
+        ('ejercicios', 'Solucionario de Ejercicios'),
+        ('otro', 'Otro'),
+    ]
+
+    CURSOS_CHOICES = [
+    ('MAT', 'Matemática'),
+    ('COM', 'Comunicación'),
+    ('CTA', 'Ciencia, Tecnología y Ambiente'),
+    ('PER', 'Persona, Familia y Relaciones Humanas'),
+    ('HIS', 'Historia'),
+    ('GEO', 'Geografía'),
+    ('CIV', 'Civismo'),
+    ('RAZ', 'Razonamiento Verbal'),
+    ('RM', 'Razonamiento Matemático'),
+    ('TRI', 'Trigonometría'),
+    ('ALG', 'Álgebra'),
+    ('GEO2', 'Geometría'),
+    ('ARI', 'Aritmética'),
+    ('BIO', 'Biología'),
+    ('QUI', 'Química'),
+    ('FIS', 'Física'),
+    ('ING', 'Inglés'),
+    ('APT', 'Aptitud Académica'),
+    ('OTR', 'Otro'),
+    ]
+
+    tipo_solucionario = models.CharField(max_length=50, choices=TIPO_SOLUCIONARIO_CHOICES, default='admision')
+    curso = models.CharField(max_length=10, choices=CURSOS_CHOICES, blank=True, null=True)
     nombre = models.CharField(max_length=255)
-    pais = models.CharField(max_length=100, choices=PAISES_CHOICES)
+    pais = models.CharField(max_length=100, choices=PAISES_CHOICES, blank=True, null=True)
     logo = models.ImageField(upload_to='logos_universidades/')
-    especialidad = models.CharField(max_length=255, blank=True, null=True)
-    tipo_solucionario = models.CharField(max_length=20, choices=TIPO_SOLUCIONARIO_CHOICES, default='admision')
+    codigo_modular = models.CharField(max_length=10, blank=True, null=True)
+    institucion_educativa = models.CharField(max_length=255, blank=True, null=True)
+    departamento = models.CharField(max_length=100, blank=True, null=True)
+    provincia = models.CharField(max_length=100, blank=True, null=True)
+    distrito = models.CharField(max_length=100, blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    profesor_creador = models.ForeignKey(Usuario, null=True, blank=True, on_delete=models.SET_NULL)
 
     def get_pais_display(self):
         return dict(PAISES_CHOICES).get(self.pais, self.pais)
+
+    def __str__(self):
+        if self.institucion_educativa:
+            return f"{self.nombre} ({self.institucion_educativa})"
+        return self.nombre
+
+    def clean(self):
+        if self.tipo_solucionario == 'admision':
+            if not self.pais or not self.nombre or not self.logo:
+                raise ValidationError("Los campos 'país', 'nombre' y 'logo' son obligatorios para exámenes de admisión.")
+        elif self.tipo_solucionario in ['ejercicios', 'otro']:
+            if '-' not in self.nombre:
+                raise ValidationError("El nombre del solucionario de ejercicios debe tener el formato: 'Curso - Tema'.")
+
+    class Meta:
+        unique_together = ('nombre', 'codigo_modular')
+        ordering = ['nombre']
+
 
 class Examen(models.Model):
     universidad = models.ForeignKey(Universidad, on_delete=models.CASCADE, related_name='examenes')
@@ -222,28 +274,29 @@ class Examen(models.Model):
     fecha = models.CharField(max_length=50)
     archivo = models.FileField(upload_to='examenes/', blank=True, null=True)
     miniatura = models.ImageField(upload_to='miniaturas_examenes/', blank=True, null=True)
+    codigo_modular = models.CharField(max_length=10, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.nombre} - {self.fecha} ({self.universidad.nombre})"
+
+    def clean(self):
+        if self.archivo:
+            if not self.archivo.name.endswith('.pdf'):
+                raise ValidationError("Solo se permiten archivos PDF.")
 
     def generar_miniatura(self):
         if self.archivo and not self.miniatura:
             try:
-                # Leer el PDF
                 pdf_file = default_storage.open(self.archivo.name, 'rb')
                 pdf_bytes = pdf_file.read()
-                
-                # Convertir primera página a imagen
                 images = convert_from_bytes(pdf_bytes, first_page=1, last_page=1, dpi=70)
                 if images:
                     img = images[0]
-                    
-                    # Crear miniatura
                     thumb_io = BytesIO()
                     img.thumbnail((200, 200))
                     img.save(thumb_io, format='JPEG', quality=85)
-                    
-                    # Guardar miniatura
                     thumb_name = f"thumb_{os.path.basename(self.archivo.name)}.jpg"
                     self.miniatura.save(thumb_name, ContentFile(thumb_io.getvalue()), save=False)
-                    
                 pdf_file.close()
                 return True
             except Exception as e:
@@ -252,10 +305,11 @@ class Examen(models.Model):
         return False
 
     def save(self, *args, **kwargs):
-        if not self.pk or 'archivo' in kwargs.get('update_fields', []):
-            self.generar_miniatura()
+        if not self.codigo_modular and self.universidad:
+            self.codigo_modular = self.universidad.codigo_modular
+
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.nombre} - {self.fecha}"
-    
+        if self.archivo and not self.miniatura:
+            self.generar_miniatura()
+            super().save(update_fields=["miniatura"])
