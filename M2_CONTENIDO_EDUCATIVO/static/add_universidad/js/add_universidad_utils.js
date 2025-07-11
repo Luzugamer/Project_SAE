@@ -148,11 +148,13 @@ export function initializeSelectPicker() {
 
 // Manejo de modales
 export function showModal(modal) {
-    $(modal).modal('show');
+    const instance = bootstrap.Modal.getOrCreateInstance(modal);
+    instance.show();
 }
 
 export function hideModal(modal) {
-    $(modal).modal('hide');
+    const instance = bootstrap.Modal.getInstance(modal);
+    if (instance) instance.hide();
 }
 
 // Utilidades para mostrar/ocultar elementos
@@ -169,10 +171,13 @@ export function showElement(element) {
 }
 
 export function hideElement(element) {
-    if (element) {
-        element.style.display = 'none';
-        element.setAttribute('aria-hidden', 'true');
-    }
+    if (!element) return;
+
+    // Evitar aplicar display: none al modal principal si se maneja con Bootstrap
+    if (element.classList.contains('modal')) return;
+
+    element.style.display = 'none';
+    element.setAttribute('aria-hidden', 'true');
 }
 
 // Función adicional útil para toggles

@@ -6,6 +6,7 @@ from django.core.files.storage import default_storage
 from pdf2image import convert_from_bytes
 from io import BytesIO
 from PIL import Image
+from M2_CONTENIDO_EDUCATIVO.storage import LogosUniversidadesStorage, ExamenesUniversidadesStorage
 from django.utils import timezone
 import os
 
@@ -260,7 +261,12 @@ class Universidad(models.Model):
     
     # Campos comunes
     nombre = models.CharField(max_length=255, verbose_name='Nombre')
-    logo = models.ImageField(upload_to='logos_universidades/', verbose_name='Logo')
+    logo = models.ImageField(
+        storage=LogosUniversidadesStorage(),
+        upload_to='',
+        verbose_name='Logo'
+    )
+    
     codigo_modular = models.CharField(max_length=10, blank=True, null=True)
     institucion_educativa = models.CharField(max_length=255, blank=True, null=True)
     departamento = models.CharField(max_length=100, blank=True, null=True)
@@ -342,24 +348,32 @@ class Universidad(models.Model):
                 raise ValidationError("El campo 'Nombre' es obligatorio.")
             if not self.logo:
                 raise ValidationError("El campo 'Logo' es obligatorio.")
+    
+    def delete(self, *args, **kwargs):
+        if self.logo and default_storage.exists(self.logo.name):
+            self.logo.delete(save=False)
+        super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        # Limpiar campos no utilizados según el tipo
+        try:
+            old_obj = Universidad.objects.get(pk=self.pk)
+            if old_obj.logo and old_obj.logo != self.logo:
+                if default_storage.exists(old_obj.logo.name):
+                    old_obj.logo.delete(save=False)
+        except Universidad.DoesNotExist:
+            pass
+
         if self.tipo_solucionario == 'admision':
-            # Limpiar campos de solucionarios de ejercicios
             self.curso = None
             self.nivel = None
         elif self.tipo_solucionario == 'ejercicios':
-            # Limpiar campos de exámenes de admisión
             self.carrera = None
             self.pais = None
         elif self.tipo_solucionario == 'otro':
-            # Limpiar todos los campos específicos
             self.pais = None
             self.carrera = None
             self.curso = None
             self.nivel = None
-            
         super().save(*args, **kwargs)
 
     class Meta:
@@ -373,7 +387,12 @@ class Examen(models.Model):
     universidad = models.ForeignKey(Universidad, on_delete=models.CASCADE, related_name='examenes')
     nombre = models.CharField(max_length=255)
     fecha = models.CharField(max_length=50)
-    archivo = models.FileField(upload_to='examenes/', blank=True, null=True)
+    archivo = models.FileField(
+        storage=ExamenesUniversidadesStorage(),
+        upload_to='',
+        blank=True,
+        null=True
+    )
     miniatura = models.ImageField(upload_to='miniaturas_examenes/', blank=True, null=True)
     codigo_modular = models.CharField(max_length=10, blank=True, null=True)
 
@@ -404,10 +423,25 @@ class Examen(models.Model):
                 print(f"Error generando miniatura: {e}")
                 return False
         return False
+    
+    def delete(self, *args, **kwargs):
+        if self.archivo and default_storage.exists(self.archivo.name):
+            self.archivo.delete(save=False)
+        if self.miniatura and default_storage.exists(self.miniatura.name):
+            self.miniatura.delete(save=False)
+        super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         if not self.codigo_modular and self.universidad:
             self.codigo_modular = self.universidad.codigo_modular
+
+        try:
+            old_obj = Examen.objects.get(pk=self.pk)
+            if old_obj.archivo and old_obj.archivo != self.archivo:
+                if default_storage.exists(old_obj.archivo.name):
+                    old_obj.archivo.delete(save=False)
+        except Examen.DoesNotExist:
+            pass
 
         super().save(*args, **kwargs)
 

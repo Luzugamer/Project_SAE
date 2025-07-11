@@ -59,13 +59,15 @@ export function mostrarPrevisualizacion(data) {
     }
 
     const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modal);
+    bootstrapModal.hide(); 
     bootstrapModal.show();
 }
 
 // Cierra el modal
 export function cerrarModalPrevia() {
     const modal = document.getElementById('modal-previa');
-    if (modal) hideModal(modal);
+    const modalInstance = bootstrap.Modal.getInstance(modal);
+    if (modalInstance) modalInstance.hide();
 }
 
 // Confirma el guardado real del formulario tras la previsualización
@@ -84,6 +86,7 @@ export function confirmarGuardado(addAnother) {
     formData.append('confirm_save', 'true');
     if (addAnother) formData.append('add_another', 'true');
 
+    cerrarModalPrevia();
     fetch(form.action, {
         method: 'POST',
         headers: {
@@ -109,7 +112,12 @@ export function confirmarGuardado(addAnother) {
                 window.location.href = window.APP_CONFIG.URLs.add_admision; // o general, según tipo
             }
         } else {
-            throw new Error(typeof data.errors === 'string' ? data.errors : 'Error al guardar. Revisa los campos.');
+            if (data.errors) {
+                const errorMsg = typeof data.errors === 'string'
+                    ? data.errors
+                    : Object.values(data.errors).flat().join(' ');
+                throw new Error(errorMsg);
+            }
         }
     })
     .catch(err => {

@@ -40,6 +40,8 @@ export function setupFormSubmission(form, submitBtn, originalBtnText, isEditMode
             submitBtn.textContent = isEditMode ? 'Actualizando...' : 'Guardando...';
         }
 
+        console.log('FormData enviado:', [...cleanFormData.entries()]);
+
         fetch(form.action, {
             method: 'POST',
             headers: {
@@ -71,13 +73,13 @@ export function setupFormSubmission(form, submitBtn, originalBtnText, isEditMode
             } else {
                 const errorTexto = typeof data.errors === 'string'
                     ? data.errors
-                    : JSON.stringify(data.errors, null, 2);
+                    : Object.values(data.errors).flat().join('<br>');
                 throw new Error(errorTexto || 'Error al guardar');
             }
         })
         .catch(err => {
             showError('Error: ' + (err.message || 'Error desconocido'));
-            console.error('Error:', err);
+            console.error('Respuesta del servidor no válida:', err);
         })
         .finally(() => {
             if (submitBtn) {

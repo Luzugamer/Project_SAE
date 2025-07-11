@@ -111,18 +111,19 @@ export function manejarCampoPais(mostrar = true) {
     if (mostrar) {
         // Aseguramos que el selectpicker esté correctamente configurado
         setTimeout(() => {
-            $(inputPais).selectpicker('val', '');
+            if (!inputPais.value || inputPais.value === '') {
+                $(inputPais).selectpicker('val', 'PE'); 
+            }
             $(inputPais).selectpicker('refresh');
             $(inputPais).selectpicker('render');
             
-            // Verificamos que las opciones estén disponibles
             const opciones = $(inputPais).find('option');
-            if (opciones.length > 1) { // Más de una opción (considerando la primera como placeholder)
+            if (opciones.length > 1) { 
                 $(inputPais).selectpicker('refresh');
             }
         }, 200);
     } else {
-        $(inputPais).selectpicker('val', '');
+        $(inputPais).selectpicker('val', 'PE');
         $(inputPais).selectpicker('refresh');
     }
 }

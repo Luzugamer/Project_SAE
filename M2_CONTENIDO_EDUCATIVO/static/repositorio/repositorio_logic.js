@@ -1,5 +1,3 @@
-// repositorio_logic.js
-
 document.addEventListener('DOMContentLoaded', function () {
     initializeRepository();
 });
@@ -10,6 +8,7 @@ function initializeRepository() {
     setupFilterOptions();
     setupFiltroToggle();
     setupFiltroAnimado();
+    setupFormHandlers();
 }
 
 function setupSearch() {
@@ -69,7 +68,195 @@ function toggleUniversityCard(tarjeta) {
 
 function loadExamenes(universidadId, container) {
     container.dataset.loaded = 'true';
-    console.log(`Cargando exámenes para universidad ${universidadId}`);
+    
+    fetch(`/repositorio/universidad/${universidadId}/examenes/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': window.csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al cargar exámenes');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            renderExamenes(container, data.examenes, universidadId);
+        } else {
+            throw new Error(data.error || 'Error al cargar exámenes');
+        }
+    })
+    .catch(error => {
+        console.error('Error cargando exámenes:', error);
+        container.innerHTML = '<p class="error">Error al cargar los exámenes</p>';
+    });
+}
+
+function renderExamenes(container, examenes, universidadId) {
+    const examenesList = container.querySelector('.examenes-list');
+    if (!examenesList) return;
+
+    examenesList.innerHTML = '';
+
+    examenes.forEach(examen => {
+        const examenElement = createExamenElement(examen, universidadId);
+        examenesList.appendChild(examenElement);
+    });
+}
+
+function createExamenElement(examen, universidadId) {
+    const div = document.createElement('div');
+    div.className = 'examen-item';
+    div.innerHTML = `
+        <div class="examen-info">
+            <h4>${examen.nombre}</h4>
+            <p class="fecha">${examen.fecha}</p>
+            ${examen.miniatura_url ? `<img src="${examen.miniatura_url}" alt="Miniatura" class="miniatura">` : ''}
+        </div>
+        <div class="examen-actions">
+            <button class="btn-editar" 
+                    data-universidad-id="${universidadId}" 
+                    data-examen-id="${examen.id}" 
+                    data-nombre="${examen.nombre}" 
+                    data-fecha="${examen.fecha}"
+                    onclick="editarExamenDesdeDataset(this)">
+                Editar
+            </button>
+            <button class="btn-eliminar" onclick="confirmarEliminarExamen(${examen.id})">
+                Eliminar
+            </button>
+            ${examen.archivo_url ? `<a href="${examen.archivo_url}" target="_blank" class="btn-ver">Ver</a>` : ''}
+        </div>
+    `;
+    return div;
+}
+
+function setupFormHandlers() {
+    // Interceptar envío de formularios de examen
+    document.addEventListener('submit', function(e) {
+        if (e.target.matches('form[action*="add-examen"], form[action*="editar"]')) {
+            e.preventDefault();
+            handleExamenFormSubmit(e.target);
+        }
+    });
+}
+
+function handleExamenFormSubmit(form) {
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Procesando...';
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': window.csrfToken
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error en la respuesta');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            handleExamenSuccess(data, form);
+        } else {
+            handleExamenError(data, form);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error al procesar el formulario', 'error');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    });
+}
+
+function handleExamenSuccess(data, form) {
+    showNotification(data.message, 'success');
+    
+    // Actualizar la UI con los datos del examen
+    if (data.examen_data) {
+        updateExamenInUI(data.examen_data, form);
+    }
+    
+    // Limpiar y ocultar formulario
+    form.reset();
+    const formContainer = form.closest('.formulario-container');
+    if (formContainer) {
+        hideForm(formContainer);
+    }
+}
+
+function handleExamenError(data, form) {
+    if (data.errors) {
+        displayFormErrors(form, data.errors);
+    } else {
+        showNotification(data.error || 'Error al procesar', 'error');
+    }
+}
+
+function updateExamenInUI(examenData, form) {
+    const isEditing = form.action.includes('editar');
+    const universidadId = extractUniversidadIdFromForm(form);
+    
+    if (isEditing) {
+        updateExistingExamen(examenData);
+    } else {
+        addNewExamenToUI(examenData, universidadId);
+    }
+}
+
+function updateExistingExamen(examenData) {
+    const examenItem = document.querySelector(`[data-examen-id="${examenData.id}"]`)?.closest('.examen-item');
+    if (examenItem) {
+        const newElement = createExamenElement(examenData, extractUniversidadIdFromExamen(examenItem));
+        examenItem.replaceWith(newElement);
+    }
+}
+
+function addNewExamenToUI(examenData, universidadId) {
+    const tarjeta = document.querySelector(`.tarjeta[data-universidad-id="${universidadId}"]`);
+    if (tarjeta) {
+        const examenesList = tarjeta.querySelector('.examenes-list');
+        if (examenesList) {
+            const newElement = createExamenElement(examenData, universidadId);
+            examenesList.insertBefore(newElement, examenesList.firstChild);
+        }
+    }
+}
+
+function extractUniversidadIdFromForm(form) {
+    const match = form.action.match(/universidad\/(\d+)/);
+    return match ? match[1] : null;
+}
+
+function extractUniversidadIdFromExamen(examenElement) {
+    const btn = examenElement.querySelector('[data-universidad-id]');
+    return btn ? btn.dataset.universidadId : null;
+}
+
+function displayFormErrors(form, errors) {
+    // Limpiar errores anteriores
+    form.querySelectorAll('.error-message').forEach(el => el.remove());
+    
+    // Mostrar nuevos errores
+    Object.keys(errors).forEach(fieldName => {
+        const field = form.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = errors[fieldName][0];
+            field.parentNode.insertBefore(errorDiv, field.nextSibling);
+        }
+    });
 }
 
 function mostrarFormulario(universidadId) {
@@ -147,22 +334,34 @@ function confirmarEliminarExamen(examenId) {
             method: 'POST',
             headers: {
                 'X-CSRFToken': window.csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'application/json'
             }
         })
-        .then(res => {
-            if (!res.ok) throw new Error('Error al eliminar');
-            return res.json();
+        .then(response => {
+            if (!response.ok) throw new Error('Error al eliminar');
+            return response.json();
         })
-        .then(() => {
-            showNotification('Examen eliminado');
-            location.reload();
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                removeExamenFromUI(examenId);
+            } else {
+                throw new Error(data.error || 'Error al eliminar');
+            }
         })
-        .catch(err => {
-            console.error(err);
+        .catch(error => {
+            console.error('Error:', error);
             showNotification('Error al eliminar', 'error');
         });
     });
+}
+
+function removeExamenFromUI(examenId) {
+    const examenItem = document.querySelector(`[data-examen-id="${examenId}"]`)?.closest('.examen-item');
+    if (examenItem) {
+        examenItem.remove();
+    }
 }
 
 function confirmarEliminarRepositorio(universidadId) {
@@ -228,7 +427,11 @@ function mostrarModal(mensaje, callbackConfirmar) {
 }
 
 function abrirModalConFormulario(url) {
-    fetch(url)
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
         .then(response => {
             if (!response.ok) throw new Error('No se pudo cargar el formulario');
             return response.text();
@@ -310,11 +513,11 @@ function applyCombinedFilters() {
         const pais = tarjeta.querySelector('.pais')?.textContent.toLowerCase() || '';
         const tipo = tarjeta.querySelector('.tipo-solucionario')?.textContent.toLowerCase() || '';
 
-        const matchTexto = nombre.includes(term) || pais.includes(term) || esp.includes(term) || tipo.includes(term);
+        const matchTexto = nombre.includes(term) || pais.includes(term) || tipo.includes(term);
         const matchPais = !checkPais || (valPais && pais === valPais.toLowerCase());
         const matchTipo = !checkTipo || (valTipo && tipo === valTipo.toLowerCase());
 
-        if (matchTexto && matchPais && matchEsp && matchTipo) {
+        if (matchTexto && matchPais && matchTipo) {
             tarjeta.style.display = 'block';
         } else {
             tarjeta.style.display = 'none';
@@ -346,6 +549,7 @@ function setupFiltroAnimado() {
     }
 }
 
+// Exportar funciones al scope global
 window.mostrarFormulario = mostrarFormulario;
 window.editarExamen = editarExamen;
 window.confirmarEliminarExamen = confirmarEliminarExamen;
